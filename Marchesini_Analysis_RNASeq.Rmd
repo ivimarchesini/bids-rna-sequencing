@@ -1,0 +1,240 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r Libraries}
+# Load necessary libraries
+#if (!require("BiocManager", quietly = TRUE))
+ #  install.packages("BiocManager")
+#BiocManager::install(version = "3.21")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(c("DESeq2", "openxlsx", "pheatmap", "org.Hs.eg.db", "ggplot2", 
+                       "FactoMineR", "ggrepel", "apeglm", "viridis", "tidyverse", 
+                       "kableExtra", "genefilter", "EnhancedVolcano", "UpSetR", 
+                       "msigdbr", "doMC", "foreach", "BiocParallel"))
+library(DESeq2)
+library(openxlsx)
+library(pheatmap)
+library(org.Hs.eg.db)
+library(ggplot2)
+library(FactoMineR)
+library(ggrepel)
+library(apeglm)
+library(ggrepel)
+library(viridis)
+library(tidyverse)
+library(kableExtra)
+library(pheatmap)
+library(genefilter)
+library(EnhancedVolcano)
+library(UpSetR)
+library(msigdbr)
+library(doMC) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
+library(foreach) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
+library(BiocParallel) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
+# optional -> increase speed of analysis due to multicore processing
+register(MulticoreParam(4)) # -> diese Zeile löschen, wenn es Probleme mit den Paketen doMC, foreach und/ oder BiocParallel gab
+```
+```{r}
+rm(list = ls())
+```
+
+```{r Konfiguration}
+# Set working directory
+
+## general config
+mainDir <- "~/workspace/RStudio/MIRACUM_BIDS_Bioinformatik_Systembiologie_RNA_Sequenzierung_Aufgabe/"
+analysisDir <- file.path(mainDir, "analysis")
+degDIR <- file.path(analysisDir, "DEG")
+gseaDIR <- file.path(analysisDir, "GSEA")
+gageDIR <- file.path(analysisDir, "GSEA", "GAGE")
+dir.create(degDIR, recursive = T)
+dir.create(gageDIR, recursive = T)
+
+setwd(mainDir)
+getwd()
+```
+Importiert die Count-Daten und erstellt daraus eine Count-Matrix 
+
+1. Importieren der Rohdaten aus dem Alignment und der Quantifizierung
+Das ausrichten der Sequenzierungsschnipsel (Alignment der Reads) wurde mit dem Progamm STAR gemacht. STAR bietet außerdem die Möglichkeit auch gleich die Qunatifizierung der Expression vorzunemhen. Dabei wurde der Parameter --quantMode GeneCount verwendet. Hierzu wurde eine sogenannte GTF/ GFF Annotationsdatei benutzt, welche die Information beinhaltet, welches Gene zu welchen chromosomalen Koordinaten gehört. Wir betrachten hier ein un-stranded-RNA-Sequenzierungs Experiment.
+
+Die einzelnen .tab Dateien beinhalten die Counts pro Gene. Dabei gibt die 1. Spalte den ENSEMBL Gen-Identifier an, z.B. ENSG00000223972 und die 2. Spalte die entsprechenden un-stranded RNA-Seq Counts. Diese beiden Spalten brauchen wir im Folgenden. Die ersten vier Reihen geben ein paar Zusammenfassungsstatistiken über die Count Datei und werden nicht benötigt.
+
+```{r}
+ensembl2entrez <- function(ensembl) {
+  entrez <- mget(as.character(ensembl), org.Hs.egENSEMBL2EG, ifnotfound = NA)
+  entrez <- lapply(entrez, function(i) return(i[1]))
+  return(unlist(entrez))
+}
+
+entrez2ensembl <- function(entrez) {
+  esbl <- mget(as.character(entrez), org.Hs.egENSEMBL, ifnotfound = NA)
+  esbl <- lapply(esbl, function(i) return(i[1]))
+  return(unlist(esbl))
+}
+
+entrez2symbol <- function(entrez) {
+  symbol <- mget(as.character(entrez), org.Hs.egSYMBOL, ifnotfound = NA)
+  symbol <- unlist(lapply(symbol, function(i) return(i[1])))
+  return(symbol)
+}
+
+entrez2genename <- function(entrez) {
+  symbol <- mget(as.character(entrez), org.Hs.egGENENAME, ifnotfound = NA)
+  symbol <- unlist(lapply(symbol, function(i) return(i[1])))
+  return(symbol)
+}
+
+getGeneMat <- function(ensIDs) {
+  geneMat <- data.frame(ENSEMBL=ensIDs)
+  geneMat$ENTREZ <- ensembl2entrez(geneMat$ENSEMBL)
+  idxNA <- !is.na(geneMat$ENTREZ)
+  sym <- entrez2symbol(na.omit(geneMat$ENTREZ))
+  genename <- entrez2genename(na.omit(geneMat$ENTREZ))
+  geneMat$Symbol <- NA
+  geneMat$Symbol[idxNA] <- sym
+  geneMat$Genename <- NA
+  geneMat$Genename[idxNA] <- genename
+  rownames(geneMat) <- geneMat$ENSEMBL
+  return(geneMat)
+}
+```
+**Aufgaben/ Fragen Woche 4**
+
+Vorbereitung:
+
+1.  Importiert die Count-Daten und erstellt daraus eine Count-Matrix
+2.  Erstellt eine Tabelle, die alle gemessenen Gene und all ihre verschiedenen IDs enthält.
+3.  Ordnet den Proben ihre biologische Bedingung zu
+4.  Erstellt das DESeq2 Objekt und normalisiert die Daten
+5.  Erstellt zwei QC Abbildungen, einmal mit den Roh-Counts und einmal mit den normalisierten Count-Werten.
+
+# Analyse
+
+## Vorbereitung
+
+### Importieren der Rohdaten aus dem Alignment und der Quantifizierung
+
+Das ausrichten der Sequenzierungsschnipsel (Alignment der Reads) wurde mit dem Progamm **STAR** gemacht. STAR bietet außerdem die Möglichkeit auch gleich die Qunatifizierung der Expression vorzunemhen. Dabei wurde der Parameter `--quantMode GeneCount` verwendet. Hierzu wurde eine sogenannte GTF/ GFF Annotationsdatei benutzt, welche die Information beinhaltet, welches Gene zu welchen chromosomalen Koordinaten gehört. Wir betrachten hier ein *un-stranded*-RNA-Sequenzierungs Experiment.
+
+Die einzelnen *.tab* Dateien beinhalten die Counts pro Gene. Dabei gibt die 1. Spalte den ENSEMBL Gen-Identifier an, z.B. *ENSG00000223972* und die 2. Spalte die entsprechenden un-stranded RNA-Seq Counts. Diese beiden Spalten brauchen wir im Folgenden. Die ersten vier Reihen geben ein paar Zusammenfassungsstatistiken über die Count Datei und werden nicht benötigt.
+
+**Erstellt die Count Matrix und die Genreferenztabelle mit allen Genen und den zugehörigen IDs. Stellt die Count-Matrix, die betrachteten Gene und die Annotation der Proben zu den biologischen Bedingungen innerhalb des HTML Dokuments dar.**
+```{r Count Matrix}
+library(readxl)
+targets <- read_excel(file.path(mainDir, "targets.xlsx"))
+
+# Generate full paths
+filePaths <- file.path(mainDir, targets$file)
+
+sampleNames <- gsub("_ReadsPerGene.out.tab", "", fileNames)
+# Count-Matrix erstellen
+countListForMatrix <- lapply(filePaths, function(f) {
+  read.table(f, header = FALSE, stringsAsFactors = FALSE)
+})
+#view(counListForMatrix)
+
+# drop first four rows
+countListForMatrix <- lapply(countListForMatrix, function(df) {
+  df[-(1:4), ]  # Remove the first four rows
+})
+
+# Nur Spalte 2 (unstranded) verwenden und Spalte 1 als Gen-ID
+geneIDs <- countListForMatrix[[1]][,1]
+cts <- do.call(cbind, lapply(countListForMatrix, function(x) x[,2]))
+rownames(cts) <- geneIDs
+colnames(cts) <- targets$label
+
+
+# remove all rows with max counts < 7 (Quality Control)
+#cts <- cts[rowMin(cts) >= 7, ]
+
+view(cts)
+
+# Make sure row names of colData match colnames of count matrix
+colData <- targets
+rownames(colData) <- colData$label
+
+# Create DESeq2 dataset
+dds <- DESeqDataSetFromMatrix(countData = cts,
+                              colData = colData,
+                              design = ~ group)
+head(dds, 2)
+```
+### Vorbereiten des DESeq2 Objektes
+
+Im nächsten Abschnitt wird das DESeq2-Modell erstellt. Damit wird die Grundlage für die spätere Analyse der differentiell exprimierten Gene (DEG) gelegt. Hierbei ist das Handbuch von [DESeq2](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) sehr hilfreich. Wir importieren die Daten auf Grundlage der erstellten Count-Matrix, analog zu [Count-Matrix-Import](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#count-matrix-input). Nach dem Import und dem Erstellen des DESeq2 Objektes müssen wir die Rohdaten einem [Vorfilter](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#pre-filtering) Schritt unterziehen um sehr niedrige Counts zu entfernen. Hierbei is es hilfreich sich zu überlegen, wie viele biologische Replikate wir pro Bedingung haben. Idealerweise entfernt man alle Gene, die im vorliegenden Experiment in Summer über alle Bedingungen weniger als 5-10 Counts haben.
+
+**Wie viele Gene verlieren wir aufgrund von niedriger Expression?**
+```{r verlorene Gene}
+# count dds rows
+countRowsBefore <- nrow(dds)
+
+smallestGroupSize <- 2
+keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+dds <- dds[keep,]
+
+countRowsAfter <- nrow(dds)
+
+print(countRowsBefore-countRowsAfter)
+
+```
+### Normalisierung und Differentielle Expression
+
+Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normalisierung der Daten vornehmen. Dazu müssen wir die *"size factors"* und die *"Dispersion"* bestimmen, damit wir den tatsächlichen Signifikanztest (wir wollen den Wald- Test verwenden) anwenden können. Außerdem müssen wir die normalisierten Expressionswerte extrahieren, damit wir damit z.B. eine PCA erstellen können. Dazu verwenden wir die [*regularized logarithm* (rlog) Transformation](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#regularized-log-transformation). Die Werte können dann mit der Funktion `assay()` extrahiert werden.
+
+```{r}
+vsd <- vst(dds, blind=FALSE)
+rld <- rlog(dds, blind=FALSE)
+head(assay(vsd), 3)
+ntd <- normTransform(dds)
+library("vsn")
+meanSdPlot(assay(ntd))
+meanSdPlot(assay(vsd))
+meanSdPlot(assay(rld))
+```
+### QC Plot vor und nach der Normalisierung
+
+Zur besseren Interpretation und dem Verständnis der Normalisierung bietet es sich an die Count-Werte der einzelnen Gene als kombinierten Boxplot für die jeweiligen Bedingungen darzustellen; jeweils vor und nach der Normalisierung. Die Konvertierung der Count-Werte in `log2(count + 1)` hat sich in dieser Hinsicht bewährt.
+
+**Erstellt bitte einen Boxplot mit den log-transformierten Counts vor und einen Boxplot nach der Normalisierung.**
+
+Hinweis: Normalisierte Counts erhaltet ihr nach anwenden der `DESeq()` Funktion und der Extraktion der Werte mit `counts(ddsObject, normalized = TRUE)`. Generell empfielt sich **ggplot2** zum Zeichnen zu verweden, da es vielfälltige Möglichkeiten bietet und dadurch sehr ansehnliche Abbildungen erstellen kann. Um ein für ggplot2 passendes `data.frame` zu erstellen, können Pakete wie z.B. reshape2, dplyr, etc. hilfreich sein.
+```{r Boxplot Counts}
+
+library(DESeq2)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+# Rohcounts
+raw_cts <- counts(dds, normalized = FALSE)
+raw_cts <- raw_cts[rowSums(raw_cts) > 0, ]
+raw_df <- as.data.frame(raw_cts) %>%
+  rownames_to_column("Gene") %>%
+  pivot_longer(-Gene, names_to = "Sample", values_to = "Count") %>%
+  mutate(Type = "Unnormalized")
+# dds ist DESeqDataSet
+dds <- DESeq(dds)
+# Normalisierte Counts
+norm_cts <- counts(dds, normalized = TRUE)
+norm_cts <- norm_cts[rowSums(norm_cts) > 0, ]
+norm_df <- as.data.frame(norm_cts) %>%
+  rownames_to_column("Gene") %>%
+  pivot_longer(-Gene, names_to = "Sample", values_to = "Count") %>%
+  mutate(Type = "Normalized")
+
+# Kombinieren
+combined_df <- bind_rows(raw_df, norm_df)
+
+# Plot
+ggplot(combined_df, aes(x = Sample, y = log2(Count + 1), fill = Type)) +
+  geom_boxplot(outlier.size = 0.3) +
+  facet_wrap(~Type) +
+  labs(title = "Log2-Boxplots vor und nach Normalisierung",
+       y = "log2(Count + 1)", x = "Sample") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
