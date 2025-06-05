@@ -5,15 +5,18 @@ output: html_notebook
 
 ```{r Libraries}
 # Load necessary libraries
-#if (!require("BiocManager", quietly = TRUE))
- #  install.packages("BiocManager")
-#BiocManager::install(version = "3.21")
-if (!requireNamespace("BiocManager", quietly = TRUE))
-	install.packages("BiocManager")
-BiocManager::install(c("DESeq2", "openxlsx", "pheatmap", "org.Hs.eg.db", "ggplot2", 
-                       "FactoMineR", "ggrepel", "apeglm", "viridis", "tidyverse", 
-                       "kableExtra", "genefilter", "EnhancedVolcano", "UpSetR", 
-                       "msigdbr", "doMC", "foreach", "BiocParallel", "vsn"))
+# if (!require("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+# BiocManager::install(version = "3.21")
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c(
+  "DESeq2", "openxlsx", "pheatmap", "org.Hs.eg.db", "ggplot2",
+  "FactoMineR", "ggrepel", "apeglm", "viridis", "tidyverse",
+  "kableExtra", "genefilter", "EnhancedVolcano", "UpSetR",
+  "msigdbr", "doMC", "foreach", "BiocParallel", "vsn"
+))
 library(DESeq2)
 library(openxlsx)
 library(pheatmap)
@@ -69,30 +72,38 @@ Die einzelnen .tab Dateien beinhalten die Counts pro Gene. Dabei gibt die 1. Spa
 ```{r}
 ensembl2entrez <- function(ensembl) {
   entrez <- mget(as.character(ensembl), org.Hs.egENSEMBL2EG, ifnotfound = NA)
-  entrez <- lapply(entrez, function(i) return(i[1]))
+  entrez <- lapply(entrez, function(i) {
+    return(i[1])
+  })
   return(unlist(entrez))
 }
 
 entrez2ensembl <- function(entrez) {
   esbl <- mget(as.character(entrez), org.Hs.egENSEMBL, ifnotfound = NA)
-  esbl <- lapply(esbl, function(i) return(i[1]))
+  esbl <- lapply(esbl, function(i) {
+    return(i[1])
+  })
   return(unlist(esbl))
 }
 
 entrez2symbol <- function(entrez) {
   symbol <- mget(as.character(entrez), org.Hs.egSYMBOL, ifnotfound = NA)
-  symbol <- unlist(lapply(symbol, function(i) return(i[1])))
+  symbol <- unlist(lapply(symbol, function(i) {
+    return(i[1])
+  }))
   return(symbol)
 }
 
 entrez2genename <- function(entrez) {
   symbol <- mget(as.character(entrez), org.Hs.egGENENAME, ifnotfound = NA)
-  symbol <- unlist(lapply(symbol, function(i) return(i[1])))
+  symbol <- unlist(lapply(symbol, function(i) {
+    return(i[1])
+  }))
   return(symbol)
 }
 
 getGeneMat <- function(ensIDs) {
-  geneMat <- data.frame(ENSEMBL=ensIDs)
+  geneMat <- data.frame(ENSEMBL = ensIDs)
   geneMat$ENTREZ <- ensembl2entrez(geneMat$ENSEMBL)
   idxNA <- !is.na(geneMat$ENTREZ)
   sym <- entrez2symbol(na.omit(geneMat$ENTREZ))
@@ -139,22 +150,22 @@ filePaths <- file.path(mainDir, targets$file)
 countListForMatrix <- lapply(filePaths, function(f) {
   read.table(f, header = FALSE, stringsAsFactors = FALSE)
 })
-#view(counListForMatrix)
+# view(counListForMatrix)
 
 # drop first four rows
 countListForMatrix <- lapply(countListForMatrix, function(df) {
-  df[-(1:4), ]  # Remove the first four rows
+  df[-(1:4), ] # Remove the first four rows
 })
 
 # Nur Spalte 2 (unstranded) verwenden und Spalte 1 als Gen-ID
-geneIDs <- countListForMatrix[[1]][,1]
-cts <- do.call(cbind, lapply(countListForMatrix, function(x) x[,2]))
+geneIDs <- countListForMatrix[[1]][, 1]
+cts <- do.call(cbind, lapply(countListForMatrix, function(x) x[, 2]))
 rownames(cts) <- geneIDs
 colnames(cts) <- targets$label
 
 
 # remove all rows with max counts < 7 (Quality Control)
-#cts <- cts[rowMin(cts) >= 7, ]
+# cts <- cts[rowMin(cts) >= 7, ]
 
 view(cts)
 
@@ -163,9 +174,11 @@ colData <- targets
 rownames(colData) <- colData$label
 
 # Create DESeq2 dataset
-dds_import <- DESeqDataSetFromMatrix(countData = cts,
-                              colData = colData,
-                              design = ~ group)
+dds_import <- DESeqDataSetFromMatrix(
+  countData = cts,
+  colData = colData,
+  design = ~group
+)
 head(dds_import, 2)
 ```
 
@@ -178,18 +191,17 @@ Im nächsten Abschnitt wird das DESeq2-Modell erstellt. Damit wird die Grundlage
 ```{r verlorene Gene}
 dds <- dds_import
 # count dds rows
-countRowsBefore <- nrow(dds) # nrow: number of rows in dds 
+countRowsBefore <- nrow(dds) # nrow: number of rows in dds
 print(countRowsBefore)
 minCounts <- 5
 # Set a threshold: genes must have at least one sample with a count ≥ 5 to be considered for keeping.
-#keep <- rowSums(counts(dds) >= minCounts) >= 1 # 38264
+# keep <- rowSums(counts(dds) >= minCounts) >= 1 # 38264
 keep <- rowSums(counts(dds)) >= minCounts
-dds <- dds[keep,]
+dds <- dds[keep, ]
 
 countRowsAfter <- nrow(dds)
 print(countRowsAfter)
-print(countRowsBefore-countRowsAfter)
-
+print(countRowsBefore - countRowsAfter)
 ```
 
 ### Normalisierung und Differentielle Expression
@@ -204,8 +216,8 @@ dispersions(dds) <- mcols(dds)$dispGeneEst
 
 dds <- nbinomWaldTest(dds)
 
-vsd <- vst(dds, blind=FALSE)
-rld <- rlog(dds, blind=FALSE)
+vsd <- vst(dds, blind = FALSE)
+rld <- rlog(dds, blind = FALSE)
 head(assay(vsd), 3)
 ntd <- normTransform(dds)
 meanSdPlot(assay(ntd))
@@ -222,7 +234,6 @@ Zur besseren Interpretation und dem Verständnis der Normalisierung bietet es si
 Hinweis: Normalisierte Counts erhaltet ihr nach anwenden der `DESeq()` Funktion und der Extraktion der Werte mit `counts(ddsObject, normalized = TRUE)`. Generell empfielt sich **ggplot2** zum Zeichnen zu verweden, da es vielfälltige Möglichkeiten bietet und dadurch sehr ansehnliche Abbildungen erstellen kann. Um ein für ggplot2 passendes `data.frame` zu erstellen, können Pakete wie z.B. reshape2, dplyr, etc. hilfreich sein.
 
 ```{r Boxplot Counts}
-
 library(DESeq2)
 library(tidyr)
 library(dplyr)
@@ -252,8 +263,10 @@ combined_df <- bind_rows(raw_df, norm_df)
 ggplot(combined_df, aes(x = Sample, y = log2(Count + 1), fill = Type)) +
   geom_boxplot(outlier.size = 0.3) +
   facet_wrap(~Type) +
-  labs(title = "Log2-Boxplots vor und nach Normalisierung",
-       y = "log2(Count + 1)", x = "Sample") +
+  labs(
+    title = "Log2-Boxplots vor und nach Normalisierung",
+    y = "log2(Count + 1)", x = "Sample"
+  ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
