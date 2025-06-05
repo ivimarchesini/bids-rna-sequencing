@@ -8,7 +8,7 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
-			"packages": "DESeq2, openxlsx, pheatmap, org.Hs.eg.db, ggplot2, FactoMineR, ggrepel, apeglm, viridis, tidyverse, kableExtra, genefilter, EnhancedVolcano, UpSetR, msigdbr, doMC, foreach, BiocParallel, vsn",
+			"packages": "DESeq2, openxlsx, pheatmap, org.Hs.eg.db, ggplot2, FactoMineR, ggrepel, apeglm, viridis, tidyverse, kableExtra, genefilter, EnhancedVolcano, UpSetR, msigdbr, doMC, foreach, BiocParallel, vsn, reshape2",
 			"installSystemRequirements": true
 		}
 	}

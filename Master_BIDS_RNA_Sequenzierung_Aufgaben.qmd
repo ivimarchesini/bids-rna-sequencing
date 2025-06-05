@@ -137,7 +137,7 @@ BiocManager::install(packages)
 #| warning: false
 #| 
 ## general config
-mainDir <- "~/workspace/RStudio/MIRACUM_BIDS_Bioinformatik_Systembiologie_RNA_Sequenzierung_Aufgabe/"
+mainDir <- getwd()
 analysisDir <- file.path(mainDir, "analysis")
 degDIR <- file.path(analysisDir, "DEG")
 gseaDIR <- file.path(analysisDir, "GSEA")
@@ -229,7 +229,6 @@ targets <- read_excel(file.path(mainDir, "targets.xlsx"))
 # Generate full paths
 filePaths <- file.path(mainDir, targets$file)
 
-sampleNames <- gsub("_ReadsPerGene.out.tab", "", fileNames)
 # Count-Matrix erstellen
 countListForMatrix <- lapply(filePaths, function(f) {
   read.table(f, header = FALSE, stringsAsFactors = FALSE)
