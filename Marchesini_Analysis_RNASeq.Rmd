@@ -9,11 +9,11 @@ output: html_notebook
  #  install.packages("BiocManager")
 #BiocManager::install(version = "3.21")
 if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+	install.packages("BiocManager")
 BiocManager::install(c("DESeq2", "openxlsx", "pheatmap", "org.Hs.eg.db", "ggplot2", 
                        "FactoMineR", "ggrepel", "apeglm", "viridis", "tidyverse", 
                        "kableExtra", "genefilter", "EnhancedVolcano", "UpSetR", 
-                       "msigdbr", "doMC", "foreach", "BiocParallel"))
+                       "msigdbr", "doMC", "foreach", "BiocParallel", "vsn"))
 library(DESeq2)
 library(openxlsx)
 library(pheatmap)
@@ -31,6 +31,7 @@ library(genefilter)
 library(EnhancedVolcano)
 library(UpSetR)
 library(msigdbr)
+library(vsn)
 library(doMC) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
 library(foreach) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
 library(BiocParallel) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
@@ -46,7 +47,8 @@ rm(list = ls())
 # Set working directory
 
 ## general config
-mainDir <- "~/workspace/RStudio/MIRACUM_BIDS_Bioinformatik_Systembiologie_RNA_Sequenzierung_Aufgabe/"
+# mainDir should be current working directory
+mainDir <- getwd()
 analysisDir <- file.path(mainDir, "analysis")
 degDIR <- file.path(analysisDir, "DEG")
 gseaDIR <- file.path(analysisDir, "GSEA")
@@ -206,7 +208,6 @@ vsd <- vst(dds, blind=FALSE)
 rld <- rlog(dds, blind=FALSE)
 head(assay(vsd), 3)
 ntd <- normTransform(dds)
-library("vsn")
 meanSdPlot(assay(ntd))
 meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
