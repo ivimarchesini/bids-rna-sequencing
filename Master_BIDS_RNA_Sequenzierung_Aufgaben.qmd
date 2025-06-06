@@ -504,20 +504,42 @@ Zusätzlich zur tabellarischen Darstellung der DEG-Ergebnisse kann man diese auc
 
 **Erstellt jeweils einen Volcano Plot für die beiden Vergleiche.**
 
-```{r}
-
+```{r Volcano Plots}
+#library(EnhancedVolcano)
 ```
 
-#### Volcano Plot: Sorafenib vs. DMSO
-
-```{r}
-
+```{r Volcano Plot Sorafenib vs DMSO}
+EnhancedVolcano(sora_annot,
+    lab = sora_annot$Symbol,
+    x = 'log2FoldChange',
+    y = 'padj',
+    title = 'Volcano Plot: Sorafenib vs DMSO',
+    pCutoff = 0.05,
+    FCcutoff = 1,
+    pointSize = 2.0,
+    labSize = 3.0,
+    legendPosition = 'right',
+    colAlpha = 0.8,
+    xlim = c(min(sora_annot$log2FoldChange, na.rm=TRUE), max(sora_annot$log2FoldChange, na.rm=TRUE))
+)
 ```
 
 #### Volcano Plot: Trametinib vs DMSO
 
-```{r}
-
+```{r Volcano Plot Trametinib vs DMSO}
+EnhancedVolcano(tram_annot,
+    lab = tram_annot$Symbol,
+    x = 'log2FoldChange',
+    y = 'padj',
+    title = 'Volcano Plot: Trametinib vs DMSO',
+    pCutoff = 0.05,
+    FCcutoff = 1,
+    pointSize = 2.0,
+    labSize = 3.0,
+    legendPosition = 'right',
+    colAlpha = 0.8,
+    xlim = c(min(tram_annot$log2FoldChange, na.rm=TRUE), max(tram_annot$log2FoldChange, na.rm=TRUE))
+)
 ```
 
 ## Vergleich der beiden Medikamente
@@ -559,28 +581,40 @@ upSetSets <- function(sets){
   result <- lapply(res, function(x) x[!is.na(x)])
   result <- unlist(result, recursive = F)
   result <- lapply(result,function(x) data.frame(ID=x))
-  return(result)
   detach(sets)
+	return(result)
 }
 ```
 
-```{r}
+```{r Vergleich UpSetR}
+# Listen der hoch- und runter-regulierten Gene für beide Medikamente
+up_list <- list(
+  Sorafenib = sora_up$Symbol,
+  Trametinib = tram_up$Symbol
+)
+down_list <- list(
+  Sorafenib = sora_down$Symbol,
+  Trametinib = tram_down$Symbol
+)
 
+# UpSet-Plot für hoch-regulierte Gene
+upset(fromList(up_list), order.by = "freq", mainbar.y.label = "Gemeinsame hoch-regulierte Gene")
+
+# UpSet-Plot für runter-regulierte Gene
+upset(fromList(down_list), order.by = "freq", mainbar.y.label = "Gemeinsame runter-regulierte Gene")
+
+# Optional: Zugriff auf die einzelnen Sets
+up_sets <- upSetSets(up_list)
+down_sets <- upSetSets(down_list)
+
+# Durch beide Medikamente hoch-regulierte Gene
+up_sets[["Sorafenib-Trametinib"]]
+
+# Durch beide Medikamente runter-regulierte Gene
+down_sets[["Sorafenib-Trametinib"]]
 ```
-
 ### Gemeinsamkeiten
-
-#### Durch beide Medikamente hoch-regulierte Gene
-
-```{r}
-
-```
-
-#### Durch beide Medikamente runter-regulierte Gene
-
-```{r}
-
-```
+Nachdem wir die DEGs für beide Medikamente identifiziert haben, können wir nun die Gemeinsamkeiten und Unterschiede zwischen den beiden Medikamenten analysieren. Wir haben bereits die hoch- und runter-regulierten Gene in Listen organisiert und können diese nun vergleichen.
 
 Jetzt kennen wir die Gene, die entweder durch beiden Medikamente oder auch nur in dem einen oder dem anderen verändert sind. Aber was machen wir jetzt damit? Wir können uns z.B. der Ressource *"Molecular Signatures Database"* (MSigDB) bedienen.
 
@@ -709,20 +743,45 @@ Um die Funktion `hyperG()` ausführen zu können brauchen wir jetzt noch ein sog
 
 **Erstellt das "universe" und führt die funktionelle Analye/ Gene-set Enrichment Analyse mit der hyperG Funktion und den Hallmark Signalwegen durch**
 
-```{r}
+```{r GSEA Universe und Hallmark}
+# Universe erstellen: alle untersuchten Gene als Symbol, ohne NA und Duplikate
+universe <- unique(na.omit(geneMat$Symbol))
 
+# Hallmark Gensets sind bereits geladen als 'hallmark' (siehe oben)
+
+# GSEA für durch beide Medikamente hoch-regulierte Gene
+gsea_up <- hyperG(
+  geneSets = hallmark,
+  DEgenes = up_sets[["Sorafenib-Trametinib"]]$ID,
+  universe = universe,
+  cutoff = 0.05,
+  mincount = 2,
+  parallel = TRUE,
+  adj.P.Val = TRUE
+)
+
+# GSEA für durch beide Medikamente runter-regulierte Gene
+gsea_down <- hyperG(
+  geneSets = hallmark,
+  DEgenes = down_sets[["Sorafenib-Trametinib"]]$ID,
+  universe = universe,
+  cutoff = 0.05,
+  mincount = 2,
+  parallel = TRUE,
+  adj.P.Val = TRUE
+)
 ```
 
-#### Gemeinsamkeiten: Durch beide Medikamente hoch-regulierte Hallmark Gensets
+###	Gemeinsamkeiten: Durch beide Medikamente hoch-regulierte Hallmark Gensets
 
 ```{r}
-
+gsea_up
 ```
 
 #### Gemeinsamkeiten: Durch beide Medikamente runter-regulierte Hallmark Gensets
 
 ```{r}
-
+gsea_down
 ```
 
 # Anhang
