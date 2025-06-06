@@ -369,8 +369,41 @@ Bevor wir mit der tatsächlichen DEG-Analyse fortfahren berechnen wir eine PCA u
 
 **Erstellt eine PCA und stellt diese als Abbildung im HTML Dokument dar.**
 
-```{r}
+```{r PCA}
+# Lade benötigte Pakete
+library(FactoMineR)
+library(ggplot2)
 
+# Angenommen, rld ist ein DESeq2::rlog Objekt
+# Extrahiere die rlog-Werte als Matrix
+rld_mat <- assay(rld)
+
+# Transponiere die Matrix, damit Proben als Zeilen (Individuals) und Gene als Spalten (Variables) vorliegen
+rld_mat_t <- t(rld_mat)
+
+# Führe PCA mit FactoMineR durch
+pca <- PCA(rld_mat_t, graph = FALSE)
+
+# Extrahiere die Koordinaten der Individuals (Proben) auf den ersten beiden Hauptkomponenten
+pca_df <- as.data.frame(pca$ind$coord)
+pca_df$Sample <- rownames(pca_df)
+
+# Optional: Füge Metadaten hinzu, z.B. Bedingung
+pca_df$group <- colData(rld)$group
+
+# Plot mit Farbzuweisung nach Gruppe
+p <- ggplot(pca_df, aes(x = Dim.1, y = Dim.2, color = group, label = Sample)) +
+  geom_point(size = 3) +
+  geom_text(vjust = -0.5, size = 3) +
+  labs(
+    title = "PCA: Individuals Graph",
+    x = paste0("PC1 (", round(pca$eig[1,2], 1), "%)"),
+    y = paste0("PC2 (", round(pca$eig[2,2], 1), "%)")
+  ) +
+  theme_minimal()
+
+# Speichere die Abbildung als PDF
+ggsave("pca_individuals.pdf", plot = p, width = 7, height = 5)
 ```
 
 ## Differentielle Expressions Analyse
