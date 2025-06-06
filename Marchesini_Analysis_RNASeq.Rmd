@@ -210,10 +210,13 @@ Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normali
 
 ```{r}
 # Implementation of Wald Test
+# size factors: Normalizes for sequencing depth/library size using median ratio method.
 dds <- estimateSizeFactors(dds)
+# Manually estimates dispersion per gene using a gene-wise estimate.
+# Then sets the dispersions slot manually with these estimates.
 dds <- estimateDispersionsGeneEst(dds)
 dispersions(dds) <- mcols(dds)$dispGeneEst
-
+# Runs the Wald test on the negative binomial GLM fit using the dispersions
 dds <- nbinomWaldTest(dds)
 
 vsd <- vst(dds, blind = FALSE)

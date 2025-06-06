@@ -95,6 +95,7 @@ library(pheatmap)
 library(genefilter)
 library(EnhancedVolcano)
 library(UpSetR)
+library(vsn)
 library(msigdbr)
 library(doMC) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
 library(foreach) # falls es hiermit Probleme gibt könnt ihr das Paket auch weglassen
@@ -258,7 +259,7 @@ colData <- targets
 rownames(colData) <- colData$label
 
 # Create DESeq2 dataset
-dds <- DESeqDataSetFromMatrix(countData = cts,
+dds_import <- DESeqDataSetFromMatrix(countData = cts,
                               colData = colData,
                               design = ~ group)
 head(dds, 2)
@@ -271,16 +272,20 @@ Im nächsten Abschnitt wird das DESeq2-Modell erstellt. Damit wird die Grundlage
 **Wie viele Gene verlieren wir aufgrund von niedriger Expression?**
 
 ```{r verlorene Gene}
+dds <- dds_import
 # count dds rows
 countRowsBefore <- nrow(dds)
+print(countRowsBefore)
 
-smallestGroupSize <- 2
-keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+minCounts <- 5
+#keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
+keep <- rowSums(counts(dds)) >= minCounts
+
 dds <- dds[keep,]
 
 countRowsAfter <- nrow(dds)
-
-print(countRowsBefore-countRowsAfter)
+print(countRowsAfter)
+print(countRowsBefore - countRowsAfter)
 
 ```
 
@@ -288,14 +293,28 @@ print(countRowsBefore-countRowsAfter)
 
 Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normalisierung der Daten vornehmen. Dazu müssen wir die *"size factors"* und die *"Dispersion"* bestimmen, damit wir den tatsächlichen Signifikanztest (wir wollen den Wald- Test verwenden) anwenden können. Außerdem müssen wir die normalisierten Expressionswerte extrahieren, damit wir damit z.B. eine PCA erstellen können. Dazu verwenden wir die [*regularized logarithm* (rlog) Transformation](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#regularized-log-transformation). Die Werte können dann mit der Funktion `assay()` extrahiert werden.
 
-```{r}
+```{r Normalisierung und Differentielle Expression}
+# Implementation of Wald Test
+# size factors: Normalizes for sequencing depth/library size using median ratio method.
+dds <- estimateSizeFactors(dds)
+sizeFactors(dds)
+# Manually estimates dispersion per gene using a gene-wise estimate.
+# Then sets the dispersions slot manually with these estimates.
+dds <- estimateDispersionsGeneEst(dds)
+dispersions(dds) <- mcols(dds)$dispGeneEst
+plotDispEsts(dds)
+# Runs the Wald test on the negative binomial GLM fit using the dispersions
+dds <- nbinomWaldTest(dds)
+plotMA(dds)
+
+# Variance stabilizing transformation
 vsd <- vst(dds, blind=FALSE)
-rld <- rlog(dds, blind=FALSE)
 head(assay(vsd), 3)
-ntd <- normTransform(dds)
-library("vsn")
-meanSdPlot(assay(ntd))
-meanSdPlot(assay(vsd))
+
+# Regularized log transformation
+rld <- rlog(dds, blind=FALSE)
+
+#meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
 ```
 
@@ -307,7 +326,7 @@ Zur besseren Interpretation und dem Verständnis der Normalisierung bietet es si
 
 Hinweis: Normalisierte Counts erhaltet ihr nach anwenden der `DESeq()` Funktion und der Extraktion der Werte mit `counts(ddsObject, normalized = TRUE)`. Generell empfielt sich **ggplot2** zum Zeichnen zu verweden, da es vielfälltige Möglichkeiten bietet und dadurch sehr ansehnliche Abbildungen erstellen kann. Um ein für ggplot2 passendes `data.frame` zu erstellen, können Pakete wie z.B. reshape2, dplyr, etc. hilfreich sein.
 
-```{r Boxplot Counts}
+```{r QC Boxplot}
 
 library(DESeq2)
 library(tidyr)
@@ -345,15 +364,14 @@ ggplot(combined_df, aes(x = Sample, y = log2(Count + 1), fill = Type)) +
 ```
 
 ```{r}
-
 # ===== Vorbereitung zur Visualisierung =====
 library(DESeq2)
 library(ggplot2)
 library(reshape2)
 
+#dds <- dds_import
 # Schritt 1: Normalisierung (führt auch SizeFactor-Berechnung durch)
-dds <- DESeq(ddsObject)  # führt SizeFactor-Berechnung und Modellierung durch
-norm_counts <- counts(dds, normalized = TRUE)
+#dds <- DESeq(dds)  # führt SizeFactor-Berechnung und Modellierung durch
 
 # Schritt 2: Rohcounts log-transformieren
 log_raw_counts <- log2(counts(dds, normalized = FALSE) + 1)
@@ -373,7 +391,16 @@ log_norm_df$Type <- "Nach Normalisierung"
 # Schritt 5: Zusammenführen
 combined_df <- rbind(log_raw_df, log_norm_df)
 
-options(bitmapType = "cairo")  # Wichtige Einstellung auf macOS/Linux
+#options(bitmapType = "cairo")  # Wichtige Einstellung auf macOS/Linux
+
+# Plot
+ggplot(combined_df, aes(x = Sample, y = log2(LogCount + 1), fill = Type)) +
+  geom_boxplot(outlier.size = 0.3) +
+  facet_wrap(~Type) +
+  labs(title = "Log2-Boxplots vor und nach Normalisierung",
+       y = "log2(Count + 1)", x = "Sample") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ## PCA - Principal Component Analysis
