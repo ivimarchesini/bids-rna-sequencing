@@ -363,46 +363,6 @@ ggplot(combined_df, aes(x = Sample, y = log2(Count + 1), fill = Type)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-```{r}
-# ===== Vorbereitung zur Visualisierung =====
-library(DESeq2)
-library(ggplot2)
-library(reshape2)
-
-#dds <- dds_import
-# Schritt 1: Normalisierung (führt auch SizeFactor-Berechnung durch)
-#dds <- DESeq(dds)  # führt SizeFactor-Berechnung und Modellierung durch
-
-# Schritt 2: Rohcounts log-transformieren
-log_raw_counts <- log2(counts(dds, normalized = FALSE) + 1)
-
-# Schritt 3: Normalisierte Counts log-transformieren
-log_norm_counts <- log2(counts(dds, normalized = TRUE) + 1)
-
-# Schritt 4: Long-Format für ggplot vorbereiten
-log_raw_df <- melt(log_raw_counts)
-colnames(log_raw_df) <- c("Gene", "Sample", "LogCount")
-log_raw_df$Type <- "Vor Normalisierung"
-
-log_norm_df <- melt(log_norm_counts)
-colnames(log_norm_df) <- c("Gene", "Sample", "LogCount")
-log_norm_df$Type <- "Nach Normalisierung"
-
-# Schritt 5: Zusammenführen
-combined_df <- rbind(log_raw_df, log_norm_df)
-
-#options(bitmapType = "cairo")  # Wichtige Einstellung auf macOS/Linux
-
-# Plot
-ggplot(combined_df, aes(x = Sample, y = log2(LogCount + 1), fill = Type)) +
-  geom_boxplot(outlier.size = 0.3) +
-  facet_wrap(~Type) +
-  labs(title = "Log2-Boxplots vor und nach Normalisierung",
-       y = "log2(Count + 1)", x = "Sample") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-```
-
 ## PCA - Principal Component Analysis
 
 Bevor wir mit der tatsächlichen DEG-Analyse fortfahren berechnen wir eine PCA um einen ersten Eindruck von unseren Daten zu bekommen. Dazu verwenden wir die eben erstellten, normalisierten Expressionswerte (rlog-Werte). In der PCA sollen die Bedingungen als *"individuals"* betrachtet und die Gene als *"variables"*. Im Resultat soll jede Probe dargestellt und in seine Haupkomponenten zerlegt werden. Hierzu könnt ihr z.B. das Paket [FactoMineR](http://factominer.free.fr/factomethods/principal-components-analysis.html) verwenden. Bitte erstellt einen sog. *"Individuals Graph"* mit den Proben und den ersten beiden Hauptkomponenten als Achsen. Wenn ihr das FactoMineR Paket verwendet findet ihr diese Infos unter `pca$ind$coord`. Um einen visuell ansprechenderen Abbildung zu erhalten würde ich empfehlen die Abbildung wieder mit dem Paket **ggplot2** zu erstellen. Mit der Funktion `ggsave()` könnte ihr die mit ggplot2 erstellte Abbildung sehr einfach in ein geeignetes Format, z.B. PDF, png, etc. exportieren.
