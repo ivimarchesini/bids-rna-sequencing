@@ -262,7 +262,7 @@ rownames(colData) <- colData$label
 dds_import <- DESeqDataSetFromMatrix(countData = cts,
                               colData = colData,
                               design = ~ group)
-head(dds, 2)
+head(dds_import, 2)
 ```
 
 ### Vorbereiten des DESeq2 Objektes
@@ -423,8 +423,68 @@ Bei der Darstellung der DEG-Ergebnisse innerhalb des HTML Dokuments müsst ihr n
 
 Hinweis: Hierzu könnt ihr den `log2FoldChange` aus der DEG-Analyse verwenden.
 
-```{r}
+```{r DEG-Analyse, message=FALSE, warning=FALSE}
+library(DESeq2)
+library(openxlsx)
+library(dplyr)
+library(kableExtra)
 
+# DEG analysis with lfcShrink for more accurate log2FC
+sora_res <- lfcShrink(dds, contrast = c("group", "Sorafenib", "DMSO"), type = "normal")
+tram_res <- lfcShrink(dds, contrast = c("group", "Trametinib", "DMSO"), type = "normal")
+
+# Annotate with gene symbols
+geneMat <- getGeneMat(rownames(sora_res))
+sora_annot <- cbind(geneMat, as.data.frame(sora_res))
+tram_annot <- cbind(geneMat, as.data.frame(tram_res))
+
+# Filter for significant genes (FDR < 0.05)
+sora_sig <- sora_annot %>% filter(!is.na(padj) & padj < 0.05)
+tram_sig <- tram_annot %>% filter(!is.na(padj) & padj < 0.05)
+
+# Split into up/down-regulated
+sora_up   <- sora_sig %>% filter(log2FoldChange > 0)
+sora_down <- sora_sig %>% filter(log2FoldChange < 0)
+tram_up   <- tram_sig %>% filter(log2FoldChange > 0)
+tram_down <- tram_sig %>% filter(log2FoldChange < 0)
+
+# Summary: number of significant genes
+cat("Sorafenib vs DMSO: total =", nrow(sora_sig), 
+    "| up =", nrow(sora_up), 
+    "| down =", nrow(sora_down), "\n")
+cat("Trametinib vs DMSO: total =", nrow(tram_sig), 
+    "| up =", nrow(tram_up), 
+    "| down =", nrow(tram_down), "\n")
+
+# Show tables in HTML (Symbol, log2FC, padj)
+kable(sora_sig[, c("Symbol", "log2FoldChange", "padj")], 
+      col.names = c("Symbol", "log2FC", "adj. p-value"), 
+      caption = "Signifikante DEGs Sorafenib vs DMSO") %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+
+kable(tram_sig[, c("Symbol", "log2FoldChange", "padj")], 
+      col.names = c("Symbol", "log2FC", "adj. p-value"), 
+      caption = "Signifikante DEGs Trametinib vs DMSO") %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+
+# Export to Excel
+write.xlsx(sora_sig, file = file.path(degDIR, "DEGs_Sorafenib_vs_DMSO.xlsx"))
+write.xlsx(tram_sig, file = file.path(degDIR, "DEGs_Trametinib_vs_DMSO.xlsx"))
+
+# Barplot: up/down-regulated gene counts
+deg_counts <- data.frame(
+  Vergleich = rep(c("Sorafenib vs DMSO", "Trametinib vs DMSO"), each = 2),
+  Regulation = rep(c("Up", "Down"), 2),
+  Anzahl = c(nrow(sora_up), nrow(sora_down), nrow(tram_up), nrow(tram_down))
+)
+
+library(ggplot2)
+ggplot(deg_counts, aes(x = Vergleich, y = Anzahl, fill = Regulation)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Anzahl signifikanter DEGs (FDR < 0.05)", y = "Gene", x = "") +
+  theme_minimal()
 ```
 
 ### Identifizierte DEGs als Tabellen
