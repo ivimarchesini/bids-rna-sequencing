@@ -442,11 +442,22 @@ tram_annot <- cbind(geneMat, as.data.frame(tram_res))
 sora_sig <- sora_annot %>% filter(!is.na(padj) & padj < 0.05)
 tram_sig <- tram_annot %>% filter(!is.na(padj) & padj < 0.05)
 
+# count sora_sig and tram_sig
+cat("Number of significant genes for Sorafenib vs DMSO:", nrow(sora_sig), "\n")
+cat("Number of significant genes for Trametinib vs DMSO:", nrow(tram_sig), "\n")
+
+
 # Split into up/down-regulated
 sora_up   <- sora_sig %>% filter(log2FoldChange > 0)
 sora_down <- sora_sig %>% filter(log2FoldChange < 0)
 tram_up   <- tram_sig %>% filter(log2FoldChange > 0)
 tram_down <- tram_sig %>% filter(log2FoldChange < 0)
+
+# count up/down-regulated genes
+cat("Sorafenib up-regulated genes:", nrow(sora_up), "\n")
+cat("Sorafenib down-regulated genes:", nrow(sora_down), "\n")
+cat("Trametinib up-regulated genes:", nrow(tram_up), "\n")
+cat("Trametinib down-regulated genes:", nrow(tram_down), "\n")
 
 # Summary: number of significant genes
 cat("Sorafenib vs DMSO: total =", nrow(sora_sig), 
@@ -613,7 +624,9 @@ up_sets[["Sorafenib-Trametinib"]]
 # Durch beide Medikamente runter-regulierte Gene
 down_sets[["Sorafenib-Trametinib"]]
 ```
+
 ### Gemeinsamkeiten
+
 Nachdem wir die DEGs für beide Medikamente identifiziert haben, können wir nun die Gemeinsamkeiten und Unterschiede zwischen den beiden Medikamenten analysieren. Wir haben bereits die hoch- und runter-regulierten Gene in Listen organisiert und können diese nun vergleichen.
 
 Jetzt kennen wir die Gene, die entweder durch beiden Medikamente oder auch nur in dem einen oder dem anderen verändert sind. Aber was machen wir jetzt damit? Wir können uns z.B. der Ressource *"Molecular Signatures Database"* (MSigDB) bedienen.
@@ -772,7 +785,7 @@ gsea_down <- hyperG(
 )
 ```
 
-###	Gemeinsamkeiten: Durch beide Medikamente hoch-regulierte Hallmark Gensets
+### Gemeinsamkeiten: Durch beide Medikamente hoch-regulierte Hallmark Gensets
 
 ```{r}
 gsea_up
