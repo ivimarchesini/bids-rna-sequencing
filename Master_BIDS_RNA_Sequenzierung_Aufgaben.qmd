@@ -405,6 +405,7 @@ p <- ggplot(pca_df, aes(x = Dim.1, y = Dim.2, color = group, label = Sample)) +
 
 # Speichere die Abbildung als PDF
 ggsave("pca_individuals.pdf", plot = p, width = 7, height = 5)
+p
 ```
 
 ## Differentielle Expressions Analyse
