@@ -277,9 +277,10 @@ dds <- dds_import
 countRowsBefore <- nrow(dds)
 print(countRowsBefore)
 
-minCounts <- 5
-#keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
-keep <- rowSums(counts(dds)) >= minCounts
+smallestGroupSize <- 2
+minCounts <- 10
+keep <- rowSums(counts(dds) >= minCounts) >= smallestGroupSize
+#keep <- rowSums(counts(dds)) >= minCounts
 
 dds <- dds[keep,]
 
