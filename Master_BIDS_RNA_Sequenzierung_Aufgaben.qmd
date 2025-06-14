@@ -1,19 +1,19 @@
 ---
 title: "RNA-Sequenzierungs-Analyse - Aufgaben"
-author: "Patrick Metzger - Institut für Medizinische Bioinformatik und Systemmedizin"
+author: "Ivanna Marchesini"
 format:
   html:
     toc: true
     number-sections: true
     df-print: paged
-    code-fold: false
+    code-fold: true
     embed-resources: true
 execute:
-  cache: true
+  cache: false
   echo: true
   warning: false
   error: false
-editor: visual
+editor: source
 ---
 
 # Einführung
@@ -789,6 +789,7 @@ gsea_up
 ```{r}
 gsea_down
 ```
+
 ```{r gsea_down enrichment plot}
 gsea_down_plot <- gsea_down[order(gsea_down$adj.P.Val), ][1:10, ]
 gsea_down_plot$Term <- factor(gsea_down_plot$Term, levels = rev(gsea_down_plot$Term))
@@ -821,6 +822,7 @@ ggplot(gsea_down_plot, aes(x = -log10(adj.P.Val), y = Term)) +
   ) +
   theme_minimal()
 ```
+
 # Anhang
 
 ```{r}
