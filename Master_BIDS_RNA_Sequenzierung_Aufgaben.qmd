@@ -769,10 +769,11 @@ gsea_up <- hyperG(
   geneSets = hallmark,
   DEgenes = up_sets[["Sorafenib-Trametinib"]]$ID,
   universe = universe,
-  cutoff = 0.05,
+  cutoff = 0.1,
   mincount = 2,
   parallel = TRUE,
-  adj.P.Val = TRUE
+  adj.P.Val = TRUE,
+  set.size = c(10,500)
 )
 
 # GSEA für durch beide Medikamente runter-regulierte Gene
@@ -780,10 +781,11 @@ gsea_down <- hyperG(
   geneSets = hallmark,
   DEgenes = down_sets[["Sorafenib-Trametinib"]]$ID,
   universe = universe,
-  cutoff = 0.05,
+  cutoff = 0.1,
   mincount = 2,
   parallel = TRUE,
-  adj.P.Val = TRUE
+  adj.P.Val = TRUE,
+  set.size = c(10,500)
 )
 ```
 
