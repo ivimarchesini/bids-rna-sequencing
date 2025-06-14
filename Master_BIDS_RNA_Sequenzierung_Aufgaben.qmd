@@ -800,7 +800,38 @@ gsea_up
 ```{r}
 gsea_down
 ```
+```{r gsea_down enrichment plot}
+gsea_down_plot <- gsea_down[order(gsea_down$adj.P.Val), ][1:10, ]
+gsea_down_plot$Term <- factor(gsea_down_plot$Term, levels = rev(gsea_down_plot$Term))
 
+ggplot(gsea_down_plot, aes(x = Term, y = -log10(adj.P.Val), fill = Count)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Enriched Hallmark Gene Sets (Down-regulated)",
+    x = "Gene Set",
+    y = "-log10(adj. p-value)",
+    fill = "Gene Count"
+  ) +
+  theme_minimal()
+```
+
+```{r Dotplot gsea_down, fig.width=8, fig.height=5}
+library(ggplot2)
+gsea_down_plot <- gsea_down[order(gsea_down$adj.P.Val), ][1:10, ]
+gsea_down_plot$Term <- factor(gsea_down_plot$Term, levels = rev(gsea_down_plot$Term))
+
+ggplot(gsea_down_plot, aes(x = -log10(adj.P.Val), y = Term)) +
+  geom_point(aes(size = Count, color = adj.P.Val)) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "adj. p-value") +
+  labs(
+    title = "Dotplot: Top 10 Enriched Hallmark Gene Sets (Down-regulated)",
+    x = "-log10(adj. p-value)",
+    y = "Gene Set",
+    size = "Gene Count"
+  ) +
+  theme_minimal()
+```
 # Anhang
 
 ```{r}
