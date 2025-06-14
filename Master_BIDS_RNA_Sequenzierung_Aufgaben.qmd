@@ -295,18 +295,8 @@ print(countRowsBefore - countRowsAfter)
 Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normalisierung der Daten vornehmen. Dazu müssen wir die *"size factors"* und die *"Dispersion"* bestimmen, damit wir den tatsächlichen Signifikanztest (wir wollen den Wald- Test verwenden) anwenden können. Außerdem müssen wir die normalisierten Expressionswerte extrahieren, damit wir damit z.B. eine PCA erstellen können. Dazu verwenden wir die [*regularized logarithm* (rlog) Transformation](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#regularized-log-transformation). Die Werte können dann mit der Funktion `assay()` extrahiert werden.
 
 ```{r Normalisierung und Differentielle Expression}
-# Implementation of Wald Test
-# size factors: Normalizes for sequencing depth/library size using median ratio method.
-dds <- estimateSizeFactors(dds)
-sizeFactors(dds)
-# Manually estimates dispersion per gene using a gene-wise estimate.
-# Then sets the dispersions slot manually with these estimates.
-dds <- estimateDispersionsGeneEst(dds)
-dispersions(dds) <- mcols(dds)$dispGeneEst
-plotDispEsts(dds)
-# Runs the Wald test on the negative binomial GLM fit using the dispersions
-dds <- nbinomWaldTest(dds)
-plotMA(dds)
+# Run the standard DESeq2 workflow
+dds <- DESeq(dds)
 
 # Variance stabilizing transformation
 vsd <- vst(dds, blind=FALSE)
@@ -315,7 +305,6 @@ head(assay(vsd), 3)
 # Regularized log transformation
 rld <- rlog(dds, blind=FALSE)
 
-#meanSdPlot(assay(vsd))
 meanSdPlot(assay(rld))
 ```
 
