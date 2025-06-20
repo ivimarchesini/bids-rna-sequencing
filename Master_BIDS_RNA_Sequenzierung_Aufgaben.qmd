@@ -143,8 +143,8 @@ analysisDir <- file.path(mainDir, "analysis")
 degDIR <- file.path(analysisDir, "DEG")
 gseaDIR <- file.path(analysisDir, "GSEA")
 gageDIR <- file.path(analysisDir, "GSEA", "GAGE")
-dir.create(degDIR, recursive = T)
-dir.create(gageDIR, recursive = T)
+if (!dir.exists(degDIR)) dir.create(degDIR, recursive = TRUE)
+if (!dir.exists(gageDIR)) dir.create(gageDIR, recursive = TRUE)
 ```
 
 **Setzen des Arbeitsverzeichnisses:** Die Funktion `setwd()` setz das Arbeitsverzeichnis und `getwd()` liest das aktuelle Arbeitsverzeichnis aus.
