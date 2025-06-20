@@ -839,6 +839,7 @@ gsea_down <- hyperG(
 
 ```{r}
 gsea_up
+gsea_up$Term <- gsub("HALLMARK_", "", gsea_up$Term)
 ```
 
 ```{r gsea_up enrichment plot}
@@ -878,6 +879,7 @@ ggplot(gsea_up_plot, aes(x = -log10(adj.P.Val), y = Term)) +
 
 ```{r}
 gsea_down
+gsea_down$Term <- gsub("HALLMARK_", "", gsea_down$Term)
 ```
 
 ```{r gsea_down enrichment plot}
