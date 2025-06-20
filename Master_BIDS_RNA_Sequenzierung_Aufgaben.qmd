@@ -612,7 +612,7 @@ upSetSets <- function(sets){
   result <- unlist(result, recursive = F)
   result <- lapply(result,function(x) data.frame(ID=x))
   detach(sets)
-	return(result)
+  return(result)
 }
 ```
 
@@ -693,7 +693,7 @@ hyperG <- function(geneSets,DEgenes,universe, cutoff=0.1, mincount=2, parallel=T
     results <- matrix(data=NA,ncol=7,nrow = 1)
     colnames(results) <- c('Term','Count','Size','p-value','adj.P.Val','odds ratio','GeneIDs')
     geneSet <- intersect(universe, geneSets[[i]])
-	e <- intersect(DEgenes,geneSet)
+  e <- intersect(DEgenes,geneSet)
     a <- length(e)
     b <- DElen - a
     c <- length(geneSet) - a
@@ -722,12 +722,12 @@ hyperG <- function(geneSets,DEgenes,universe, cutoff=0.1, mincount=2, parallel=T
   
   if(nrow(results) != 1){
     results <- results[order(results[,'p-value'],decreasing = FALSE),]
-	results[,'adj.P.Val'] <- p.adjust(results[,'p-value'], 'BH')
-	if(adj.P.Val){
-		results <- as.data.frame(subset(results,results[,'adj.P.Val']<=cutoff))
-	}else{
-		results <- as.data.frame(subset(results,results[,'p-value']<=cutoff))
-	}
+  results[,'adj.P.Val'] <- p.adjust(results[,'p-value'], 'BH')
+  if(adj.P.Val){
+    results <- as.data.frame(subset(results,results[,'adj.P.Val']<=cutoff))
+  }else{
+    results <- as.data.frame(subset(results,results[,'p-value']<=cutoff))
+  }
     results <- as.data.frame(subset(results,results[,'Count']>=mincount))
   }else results <- as.data.frame(results)
   
