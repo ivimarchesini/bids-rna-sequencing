@@ -511,19 +511,25 @@ tram_down_go_results <- enrichGO(
 ```
 
 Barplots der GO Ergebnisse für Sorafenib Up-Regulierte Gene:
+
 ```{r GO Plot Sora Up, fig.width=12, fig.height=10}
 barplot(sora_up_go_results, showCategory = 20, main = "GO Enrichment Sorafenib Up-Regulierte Gene")
 ```
+
 Barplots der GO Ergebnisse für Sorafenib Down-Regulierte Gene:
+
 ```{r GO Plot Sora Down, fig.width=12, fig.height=10}
 barplot(sora_down_go_results, showCategory = 20, main = "GO Enrichment Sorafenib Down-Regulierte Gene")
 ```
 
 Barplots der GO Ergebnisse für Trametinib Up-Regulierte Gene:
+
 ```{r Go Plot Tram Up, fig.width=12, fig.height=10}
 barplot(tram_up_go_results, showCategory = 20, main = "GO Enrichment Trametinib Up-Regulierte Gene")
 ```
+
 Barplots der GO Ergebnisse für Trametinib Down-Regulierte Gene:
+
 ```{r Go Plot Tram Down, fig.width=12, fig.height=10}
 barplot(tram_down_go_results, showCategory = 20, main = "GO Enrichment Trametinib Down-Regulierte Gene")
 ```
