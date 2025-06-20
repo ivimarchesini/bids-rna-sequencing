@@ -782,7 +782,40 @@ gsea_down <- hyperG(
 gsea_up
 ```
 
-#### Gemeinsamkeiten: Durch beide Medikamente runter-regulierte Hallmark Gensets
+```{r gsea_up enrichment plot}
+gsea_up_plot <- gsea_up[order(gsea_up$adj.P.Val), ][1:10, ]
+gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels = rev(gsea_up_plot$Term))
+
+ggplot(gsea_up_plot, aes(x = Term, y = -log10(adj.P.Val), fill = Count)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Enriched Hallmark Gene Sets (Up-regulated)",
+    x = "Gene Set",
+    y = "-log10(adj. p-value)",
+    fill = "Gene Count"
+  ) +
+  theme_minimal()
+```
+
+```{r Dotplot gsea_up, fig.width=8, fig.height=5}
+library(ggplot2)
+gsea_up_plot <- gsea_up[order(gsea_up$adj.P.Val), ][1:10, ]
+gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels= rev(gsea_up_plot$Term))
+
+ggplot(gsea_up_plot, aes(x = -log10(adj.P.Val), y = Term)) +
+  geom_point(aes(size = Count, color = adj.P.Val)) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "adj. p-value") +
+  labs(
+    title = "Dotplot: Top 10 Enriched Hallmark Gene Sets (Up-regulated)",
+    x = "-log10(adj. p-value)",
+    y = "Gene Set",
+    size = "Gene Count"
+  ) +
+  theme_minimal()
+```
+
+### Gemeinsamkeiten: Durch beide Medikamente runter-regulierte Hallmark Gensets
 
 ```{r}
 gsea_down
