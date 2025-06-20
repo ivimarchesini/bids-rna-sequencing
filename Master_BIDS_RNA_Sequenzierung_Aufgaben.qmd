@@ -127,7 +127,9 @@ packages <- c(
   "kableExtra",
   "pheatmap",
   "EnhancedVolcano",
-  "msigdbr"
+  "msigdbr",
+  "clusterProfiler",
+  "AnnotationDbi"
 )
 BiocManager::install(packages)
 ```
