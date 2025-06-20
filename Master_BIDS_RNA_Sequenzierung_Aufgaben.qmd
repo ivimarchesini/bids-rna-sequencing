@@ -860,15 +860,18 @@ ggplot(gsea_up_plot, aes(x = Term, y = -log10(adj.P.Val), fill = Count)) +
 
 ```{r Dotplot gsea_up, fig.width=8, fig.height=5}
 library(ggplot2)
-gsea_up_plot <- gsea_up[order(gsea_up$adj.P.Val), ][1:10, ]
-gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels= rev(gsea_up_plot$Term))
+# Calculate ratio and order by ratio descending, select top 25
+gsea_up_plot <- gsea_up
+gsea_up_plot$Ratio <- gsea_up_plot$Count / gsea_up_plot$Size
+gsea_up_plot <- gsea_up_plot[order(gsea_up_plot$Ratio, decreasing = TRUE), ][1:25, ]
+gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels = rev(gsea_up_plot$Term))
 
-ggplot(gsea_up_plot, aes(x = -log10(adj.P.Val), y = Term)) +
-  geom_point(aes(size = Count, color = adj.P.Val)) +
-  scale_color_viridis_c(option = "plasma", direction = -1, name = "adj. p-value") +
+ggplot(gsea_up_plot, aes(x = Ratio, y = Term)) +
+  geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
   labs(
-    title = "Dotplot: Top 10 Enriched Hallmark Gene Sets (Up-regulated)",
-    x = "-log10(adj. p-value)",
+    title = "Dotplot: Top Enriched Hallmark Gene Sets (Up-regulated, Ordered by Ratio)",
+    x = "Gene Ratio (Count / Size)",
     y = "Gene Set",
     size = "Gene Count"
   ) +
@@ -900,16 +903,19 @@ ggplot(gsea_down_plot, aes(x = Term, y = -log10(adj.P.Val), fill = Count)) +
 
 ```{r Dotplot gsea_down, fig.width=8, fig.height=5}
 library(ggplot2)
-gsea_down_plot <- gsea_down[order(gsea_down$adj.P.Val), ][1:10, ]
+# Calculate ratio and order by ratio descending, select top 25
+gsea_down_plot <- gsea_down
+gsea_down_plot$Ratio <- gsea_down_plot$Count / gsea_down_plot$Size
+gsea_down_plot <- gsea_down_plot[order(gsea_down_plot$Ratio, decreasing = TRUE), ][1:25, ]
 gsea_down_plot$Term <- factor(gsea_down_plot$Term, levels = rev(gsea_down_plot$Term))
 
-ggplot(gsea_down_plot, aes(x = -log10(adj.P.Val), y = Term)) +
-  geom_point(aes(size = Count, color = adj.P.Val)) +
-  scale_color_viridis_c(option = "plasma", direction = -1, name = "adj. p-value") +
+ggplot(gsea_down_plot, aes(x = Ratio, y = Term)) +
+  geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
   labs(
-    title = "Dotplot: Top 10 Enriched Hallmark Gene Sets (Down-regulated)",
-    x = "-log10(adj. p-value)",
-    y = "Gene Set",
+    title = "Dotplot: Top Enriched KEGG Pathways (Ordered by Ratio)",
+    x = "Gene Ratio (Count / Size)",
+    y = "KEGG Pathway",
     size = "Gene Count"
   ) +
   theme_minimal()
