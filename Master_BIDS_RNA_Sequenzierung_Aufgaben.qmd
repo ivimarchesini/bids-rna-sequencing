@@ -274,7 +274,12 @@ Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normali
 
 ```{r Normalisierung und Differentielle Expression}
 # Run the standard DESeq2 workflow
-dds <- DESeq(dds)
+dds <- DESeq(
+	object = dds,
+	test = "Wald",
+	fitType = "parametric",
+	parallel = TRUE
+)
 
 # Variance stabilizing transformation
 vsd <- vst(dds, blind=FALSE)
@@ -458,26 +463,42 @@ ggplot(deg_counts, aes(x = Vergleich, y = Anzahl, fill = Regulation)) +
 
 #### Sorafenib vs. DMSO
 
-```{r Sorafenib vs DMSO}
+```{r Sorafenib vs DMSO up-regulated}
 # Tabellarische Darstellung der signifikanten DEGs für Sorafenib vs DMSO
-kable(sora_sig[, c("Symbol", "log2FoldChange", "padj")], 
+kable(sora_up[, c("Symbol", "log2FoldChange", "padj")], 
       col.names = c("Symbol", "log2FC", "adj. p-value"), 
-      caption = "Signifikante DEGs Sorafenib vs DMSO") %>%
+      caption = "Signifikante DEGs Sorafenib vs DMSO (up-reguliert)") %>%
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
 ```
 
+```{r Sorafenib vs DMSO down-regulated}
+# Tabellarische Darstellung der signifikanten DEGs für Sorafenib vs DMSO
+kable(sora_down[, c("Symbol", "log2FoldChange", "padj")], 
+			col.names = c("Symbol", "log2FC", "adj. p-value"), 
+			caption = "Signifikante DEGs Sorafenib vs DMSO (down-reguliert)") %>%
+	kable_styling() %>%
+	scroll_box(width = "100%", height = "400px")
+```
 #### Trametinib vs. DMSO
 
-```{r Trametinib vs DMSO}
+```{r Trametinib vs DMSO up-regulated}
 # Tabellarische Darstellung der signifikanten DEGs für Trametinib vs DMSO
-kable(tram_sig[, c("Symbol", "log2FoldChange", "padj")], 
+kable(tram_up[, c("Symbol", "log2FoldChange", "padj")], 
       col.names = c("Symbol", "log2FC", "adj. p-value"), 
-      caption = "Signifikante DEGs Trametinib vs DMSO") %>%
+      caption = "Signifikante DEGs Trametinib vs DMSO (up-reguliert)") %>%
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
 ```
 
+```{r Trametinib vs DMSO down-regulated}
+# Tabellarische Darstellung der signifikanten DEGs für Trametinib vs DMSO
+kable(tram_down[, c("Symbol", "log2FoldChange", "padj")], 
+      col.names = c("Symbol", "log2FC", "adj. p-value"), 
+      caption = "Signifikante DEGs Trametinib vs DMSO (down-reguliert)") %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
+```
 #### Gene Ontology Analysis
 
 ```{r GO}
