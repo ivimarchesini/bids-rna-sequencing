@@ -106,34 +106,6 @@ register(MulticoreParam(4)) # -> diese Zeile löschen, wenn es Probleme mit den 
 
 Hinweis: Falls diese nicht installiert sind, können sie mit dem Paketmanager von [bioconductor](https://www.bioconductor.org/install/) `BiocManager::install()` oder `install.packages()` installiert werden.
 
-```{r}
-#| eval: false
-packages <- c(
-  "doMC",
-  "foreach",
-  "BiocParallel",
-  "UpSetR",
-  "genefilter",
-  "DESeq2",
-  "openxlsx",
-  "pheatmap",
-  "org.Hs.eg.db",
-  "ggplot2",
-  "FactoMineR",
-  "ggrepel",
-  "apeglm",
-  "viridis",
-  "tidyverse",
-  "kableExtra",
-  "pheatmap",
-  "EnhancedVolcano",
-  "msigdbr",
-  "clusterProfiler",
-  "AnnotationDbi"
-)
-BiocManager::install(packages)
-```
-
 ## Konfiguration
 
 ```{r}
