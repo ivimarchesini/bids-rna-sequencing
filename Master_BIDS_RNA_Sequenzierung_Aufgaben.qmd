@@ -9,7 +9,7 @@ format:
     code-fold: true
     embed-resources: true
 execute:
-  cache: false
+  cache: true
   echo: true
   warning: false
   error: false
