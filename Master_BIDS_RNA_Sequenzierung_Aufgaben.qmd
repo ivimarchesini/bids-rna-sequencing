@@ -761,7 +761,6 @@ gsea_up <- hyperG(
   cutoff = 0.1,
   mincount = 2,
   parallel = TRUE,
-  adj.P.Val = TRUE,
   set.size = c(10,500)
 )
 
@@ -773,7 +772,6 @@ gsea_down <- hyperG(
   cutoff = 0.1,
   mincount = 2,
   parallel = TRUE,
-  adj.P.Val = TRUE,
   set.size = c(10,500)
 )
 ```
