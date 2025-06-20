@@ -226,7 +226,11 @@ colnames(cts) <- targets$label
 # remove all rows with max counts < 7 (Quality Control)
 #cts <- cts[rowMin(cts) >= 7, ]
 
-view(cts)
+data.frame(cts)
+
+geneMat <- getGeneMat(rownames(cts))
+
+data.frame(geneMat)
 
 # Make sure row names of colData match colnames of count matrix
 colData <- targets
