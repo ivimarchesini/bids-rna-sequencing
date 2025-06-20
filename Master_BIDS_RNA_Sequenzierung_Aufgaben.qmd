@@ -500,6 +500,60 @@ kable(tram_sig[, c("Symbol", "log2FoldChange", "padj")],
   scroll_box(width = "100%", height = "400px")
 ```
 
+#### Gene Ontology Analysis
+
+```{r GO}
+library(clusterProfiler)
+library(AnnotationDbi)
+
+sora_up_genes_to_test <- rownames(sora_up)
+tram_up_genes_to_test <- rownames(tram_up)
+sora_down_genes_to_test <- rownames(sora_down)
+tram_down_genes_to_test <- rownames(tram_down)
+sora_up_go_results <- enrichGO(
+  gene = sora_up_genes_to_test,
+  OrgDb = org.Hs.eg.db,
+  keyType = "ENSEMBL",
+  ont = "BP", # Biological Process
+)
+tram_up_go_results <- enrichGO(
+  gene = tram_up_genes_to_test,
+  OrgDb = org.Hs.eg.db,
+  keyType = "ENSEMBL",
+  ont = "BP", # Biological Process
+)
+sora_down_go_results <- enrichGO(
+  gene = sora_down_genes_to_test,
+  OrgDb = org.Hs.eg.db,
+  keyType = "ENSEMBL",
+  ont = "BP", # Biological Process
+)
+tram_down_go_results <- enrichGO(
+  gene = tram_down_genes_to_test,
+  OrgDb = org.Hs.eg.db,
+  keyType = "ENSEMBL",
+  ont = "BP", # Biological Process
+)
+```
+
+Barplots der GO Ergebnisse für Sorafenib Up-Regulierte Gene:
+```{r GO Plot Sora Up, fig.width=12, fig.height=10}
+barplot(sora_up_go_results, showCategory = 20, main = "GO Enrichment Sorafenib Up-Regulierte Gene")
+```
+Barplots der GO Ergebnisse für Sorafenib Down-Regulierte Gene:
+```{r GO Plot Sora Down, fig.width=12, fig.height=10}
+barplot(sora_down_go_results, showCategory = 20, main = "GO Enrichment Sorafenib Down-Regulierte Gene")
+```
+
+Barplots der GO Ergebnisse für Trametinib Up-Regulierte Gene:
+```{r Go Plot Tram Up, fig.width=12, fig.height=10}
+barplot(tram_up_go_results, showCategory = 20, main = "GO Enrichment Trametinib Up-Regulierte Gene")
+```
+Barplots der GO Ergebnisse für Trametinib Down-Regulierte Gene:
+```{r Go Plot Tram Down, fig.width=12, fig.height=10}
+barplot(tram_down_go_results, showCategory = 20, main = "GO Enrichment Trametinib Down-Regulierte Gene")
+```
+
 ### Visuelle Darstellung: Volcano Plot
 
 Zusätzlich zur tabellarischen Darstellung der DEG-Ergebnisse kann man diese auch als sog. *"Volcano Plots"* darstellen. Dabei werden alle Gene als Punkte mit ihrem Signifikanzwert (y-Achse) und dem log2FoldChange (x-Achse) dargestellt. Die signifikanten Gene werden dabei farblich hervorgehoben. Mit dem R Paket [EnhancedVolcano](http://www.bioconductor.org/packages/release/bioc/vignettes/EnhancedVolcano/inst/doc/EnhancedVolcano.html) haben wir gute Erfahrungen gemacht.
