@@ -533,6 +533,11 @@ tram_down_go_results <- enrichGO(
   keyType = "ENSEMBL",
   ont = "BP", # Biological Process
 )
+# Order GO enrichment results by Count descending
+sora_up_go_results@result <- sora_up_go_results@result[order(-sora_up_go_results@result$Count), ]
+tram_up_go_results@result <- tram_up_go_results@result[order(-tram_up_go_results@result$Count), ]
+sora_down_go_results@result <- sora_down_go_results@result[order(-sora_down_go_results@result$Count), ]
+tram_down_go_results@result <- tram_down_go_results@result[order(-tram_down_go_results@result$Count), ]
 ```
 
 Barplots der GO Ergebnisse für Sorafenib Up-Regulierte Gene:
