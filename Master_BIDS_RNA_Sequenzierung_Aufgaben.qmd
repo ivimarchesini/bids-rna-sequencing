@@ -865,7 +865,7 @@ library(ggplot2)
 # Calculate ratio and order by ratio descending, select top 25
 gsea_up_plot <- gsea_up
 gsea_up_plot$Ratio <- gsea_up_plot$Count / gsea_up_plot$Size
-gsea_up_plot <- gsea_up_plot[order(gsea_up_plot$Ratio, decreasing = TRUE), ][1:25, ]
+gsea_up_plot <- gsea_up_plot[order(gsea_up_plot$Ratio, decreasing = TRUE), ][1:min(25, nrow(gsea_up_plot)), ]
 gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels = rev(gsea_up_plot$Term))
 
 ggplot(gsea_up_plot, aes(x = Ratio, y = Term)) +
@@ -908,7 +908,7 @@ library(ggplot2)
 # Calculate ratio and order by ratio descending, select top 25
 gsea_down_plot <- gsea_down
 gsea_down_plot$Ratio <- gsea_down_plot$Count / gsea_down_plot$Size
-gsea_down_plot <- gsea_down_plot[order(gsea_down_plot$Ratio, decreasing = TRUE), ][1:25, ]
+gsea_down_plot <- gsea_down_plot[order(gsea_down_plot$Ratio, decreasing = TRUE), ][1:min(25, nrow(gsea_down_plot)), ]
 gsea_down_plot$Term <- factor(gsea_down_plot$Term, levels = rev(gsea_down_plot$Term))
 
 ggplot(gsea_down_plot, aes(x = Ratio, y = Term)) +
