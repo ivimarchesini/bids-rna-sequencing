@@ -570,9 +570,6 @@ Zusätzlich zur tabellarischen Darstellung der DEG-Ergebnisse kann man diese auc
 
 **Erstellt jeweils einen Volcano Plot für die beiden Vergleiche.**
 
-```{r Volcano Plots}
-#library(EnhancedVolcano)
-```
 
 ```{r Volcano Plot Sorafenib vs DMSO}
 EnhancedVolcano(sora_annot,
