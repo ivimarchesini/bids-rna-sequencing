@@ -272,6 +272,22 @@ print(countRowsBefore - countRowsAfter)
 
 Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normalisierung der Daten vornehmen. Dazu müssen wir die *"size factors"* und die *"Dispersion"* bestimmen, damit wir den tatsächlichen Signifikanztest (wir wollen den Wald- Test verwenden) anwenden können. Außerdem müssen wir die normalisierten Expressionswerte extrahieren, damit wir damit z.B. eine PCA erstellen können. Dazu verwenden wir die [*regularized logarithm* (rlog) Transformation](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#regularized-log-transformation). Die Werte können dann mit der Funktion `assay()` extrahiert werden.
 
+## Warum ist die Normalisierung von Counts wichtig?
+
+Die **Normalisierung von RNA-Seq-Daten** ist ein entscheidender Schritt im Analyseprozess. Sie ist notwendig, um technische Variabilität zu beseitigen und sinnvolle Vergleiche der Genexpressionsniveaus zwischen Proben zu ermöglichen.
+
+### Effekte innerhalb einer Probe (*within-sample effect*)
+
+Die Genlänge beeinflusst den Vergleich von Read Counts zwischen verschiedenen Genen **innerhalb** einer Probe.
+
+- → Längere Gene erhalten tendenziell mehr Reads, was ohne Korrektur zu verzerrten Ergebnissen führt.
+
+### Effekte zwischen Proben (*between-sample effect*)
+
+Die Sequenziertiefe (Anzahl gelesener Fragmente) beeinflusst den Vergleich von Read Counts **desselben Gens zwischen verschiedenen Proben**.
+
+- → Ohne Normalisierung kann es so aussehen, als ob ein Gen unterschiedlich exprimiert ist, obwohl dies nur ein technischer Effekt ist.
+
 ```{r Normalisierung und Differentielle Expression}
 # Run the standard DESeq2 workflow
 dds <- DESeq(
@@ -377,6 +393,15 @@ p <- ggplot(pca_df, aes(x = Dim.1, y = Dim.2, color = group, label = Sample)) +
 ggsave("pca_individuals.pdf", plot = p, width = 7, height = 5)
 p
 ```
+## Interpretation der PCA
+
+In der **PCA** (Hauptkomponentenanalyse) sieht man deutlich, dass sich die Replikate einer Probe gut zusammen gruppieren. Die verschiedenen Gruppen verteilen sich klar entlang der beiden Hauptkomponenten (PC1 und PC2).
+
+Die PCA hilft dabei, die Gruppierung von Replikaten zu visualisieren und technische oder biologische Ausreißer zu identifizieren. Zum Beispiel kann sie eine falsch beschriftete Bibliothek oder eine kontaminierte Probe aufdecken, indem der Ausreißer in einer anderen Gruppe clustert.
+
+- → **Jede Behandlungsgruppe sollte ein eigenes, deutliches Cluster bilden**, was Unterschiede in der Genexpression durch den Einfluss des Wirkstoffs widerspiegelt.
+- → **Jede Gruppe clustert eng zusammen** (geringe Variation innerhalb der Gruppe). Innerhalb einer Gruppe erwarten wir eine hohe Reproduzierbarkeit (Replikate sollten ähnlich sein).
+- → **Die Gruppen sind klar voneinander getrennt** (hohe Variation zwischen den Gruppen).
 
 ## Differentielle Expressions Analyse
 
@@ -455,6 +480,14 @@ ggplot(deg_counts, aes(x = Vergleich, y = Anzahl, fill = Regulation)) +
   labs(title = "Anzahl signifikanter DEGs (FDR < 0.05)", y = "Gene", x = "") +
   theme_minimal()
 ```
+## Vergleich der Wirkstoffe: Sorafenib vs. Trametinib
+
+**Sorafenib** induziert eine deutlich stärkere genomweite Antwort im Vergleich zu **Trametinib**:
+
+- Über **3500 Gene** sind durch Sorafenib signifikant verändert – die Mehrheit davon ist **herunterreguliert**.
+- **Trametinib** führt nur zu **moderaten Veränderungen** mit deutlich weniger differentiell exprimierten Genen.
+
+→ **Sorafenib** hat einen **breiteren Einfluss auf zelluläre Signalwege** und die **Genexpression**.
 
 ### Identifizierte DEGs als Tabellen
 
@@ -497,6 +530,27 @@ kable(tram_down[, c("Symbol", "log2FoldChange", "padj")],
   scroll_box(width = "100%", height = "400px")
 ```
 #### Gene Ontology Analysis
+Die **Gene Ontology (GO)-Analyse** ist ein bioinformatisches Verfahren, das verwendet wird, um die **biologischen Funktionen**, an denen eine Liste von Genen beteiligt ist, systematisch zu beschreiben und zu interpretieren.
+
+Die **Gene Ontology** unterteilt die Genfunktionen in drei Hauptkategorien:
+
+- **Biological Process (BP):**  
+  Beschreibt biologische Abläufe oder Prozesse, an denen ein Gen beteiligt ist  
+  *z. B. Zellteilung, Apoptose, Immunantwort*
+
+- **Molecular Function (MF):**  
+  Beschreibt die molekulare Aktivität eines Gens oder Proteins  
+  *z. B. Kinaseaktivität, DNA-Bindung*
+
+- **Cellular Component (CC):**  
+  Beschreibt, wo in der Zelle ein Genprodukt lokalisiert ist  
+  *z. B. Zellkern, Mitochondrium, Membran*
+
+Sie wird typischerweise nach einer differentiellen Genexpressionsanalyse durchgeführt, um z. B. die Wirkung eines Medikaments auf zelluläre Abläufe besser zu verstehen.
+
+### Hinweis zur Analyse
+
+Für die vorliegende Analyse wurde **ausschließlich der „Biological Process (BP)“-Zweig** der Gene Ontology betrachtet, da dieser Einblick in **komplexe zelluläre und organismische Abläufe** bietet, die durch die Behandlung beeinflusst werden.
 
 ```{r GO}
 library(clusterProfiler)
@@ -542,28 +596,140 @@ Barplots der GO Ergebnisse für Sorafenib Up-Regulierte Gene:
 ```{r GO Plot Sora Up, fig.width=12, fig.height=10}
 barplot(sora_up_go_results, showCategory = 20, main = "GO Enrichment Sorafenib Up-Regulierte Gene")
 ```
+## Sorafenib Up: Konklusion
+
+Die durch **Sorafenib** induzierten Gene sind stark angereichert in **Stoffwechselprozessen**, insbesondere:
+
+- **Lipidabbau**
+- **Phospholipid- und Fettsäuremetabolismus**
+
+Zusätzlich werden Gene **hochreguliert**, die auf **oxidativen Stress** und **Xenobiotika** (Fremdstoffe) reagieren.
+
+→ Dies weist auf **zellinternen Stress** durch Sorafenib hin.
+
+Weitere betroffene Prozesse:
+
+- **Autophagie**
+- **Insulinantwort**
+- **Proteinabbau**
+
+---
+
+**Fazit**:  
+**Sorafenib** führt zu einer **umfassenden metabolischen Reprogrammierung** und aktiviert **zelluläre Schutzmechanismen**, um mit dem durch den Wirkstoff ausgelösten Stress umzugehen.
 
 Barplots der GO Ergebnisse für Sorafenib Down-Regulierte Gene:
 
 ```{r GO Plot Sora Down, fig.width=12, fig.height=10}
 barplot(sora_down_go_results, showCategory = 20, main = "GO Enrichment Sorafenib Down-Regulierte Gene")
 ```
+## Sorafenib Down: Konklusion
+
+**Sorafenib** unterdrückt gezielt Gene, die an der **Proteinbiosynthese** beteiligt sind. Besonders betroffen sind:
+
+- **Ribosomenbiogenese**
+- **rRNA-Prozesse**
+- **RNA-Verarbeitung**
+
+Zusätzlich werden folgende Prozesse signifikant **herunterreguliert**:
+
+- **Nuklearer Transport**
+- **mRNA-Splicing**
+- **Nukleäre Lokalisation von Proteinen**
+- **Kinaseaktivität**
+- **Apoptose-regulierende Signalwege**
+
+---
+
+**Fazit**:  
+**Sorafenib hemmt zentrale zelluläre Funktionen** wie **Translation**, **Signalweiterleitung** und **Zellwachstum** – dies unterstützt seine **wirkung als wachstumshemmendes Krebsmedikament**.
 
 Barplots der GO Ergebnisse für Trametinib Up-Regulierte Gene:
 
 ```{r Go Plot Tram Up, fig.width=12, fig.height=10}
 barplot(tram_up_go_results, showCategory = 20, main = "GO Enrichment Trametinib Up-Regulierte Gene")
 ```
+## Trametinib Up: Konklusion
+
+Für **Trametinib** zeigt sich eine signifikante Anreicherung in **biologischen Prozessen**, die vor allem die **Entwicklung verschiedener Organe und Systeme** betreffen.
+
+Besonders hervorzuheben sind:
+
+- Entwicklung von **Drüsen**, **Leber** und **Verdauungstrakt**
+- Entwicklung des **hepatischen** und **urogenitalen Systems**
+- **Intrazelluläre Rezeptorsignalwege**
+- **Reaktionen auf Vitamine**
+- **Differenzierung kardialer vaskulärer glatter Muskelzellen**
+
+---
+
+**Fazit**:  
+**Trametinib** wirkt nicht nur auf Tumorzellen, sondern beeinflusst auch **wichtige Entwicklungs- und Regulationswege** in verschiedenen Geweben.
 
 Barplots der GO Ergebnisse für Trametinib Down-Regulierte Gene:
 
 ```{r Go Plot Tram Down, fig.width=12, fig.height=10}
 barplot(tram_down_go_results, showCategory = 20, main = "GO Enrichment Trametinib Down-Regulierte Gene")
 ```
+## Trametinib Down:Konklusion
+
+**Trametinib** beeinflusst deutlich **Signalwege und biologische Prozesse**, die mit der **Regulation der Phosphorylierung** und **Kinaseaktivität** verbunden sind.
+
+Dabei werden zentrale zelluläre Vorgänge **vermindert**, darunter:
+
+- **Proliferation von Epithelzellen**
+- **Apoptose**
+- **Organisation supramolekularer Fasern**
+- **Proteinlokalisierung zum Zellkern**
+
+Auch Entwicklungsprozesse sind betroffen, insbesondere:
+
+- **Nervensystementwicklung**, **Gliogenese** und **Gliazell-Differenzierung**
+- **Haut- und Mesenchymentwicklung**
+- **Reaktion auf oxidativen Stress** und **Xenobiotika**
+
+---
+
+**Fazit**:  
+**Trametinib hemmt die Regulation vielfältiger zellulärer und entwicklungsbezogener Signalwege**, was möglicherweise zur **Hemmung von Tumorwachstum und -Progression** beiträgt.
 
 ### Visuelle Darstellung: Volcano Plot
 
 Zusätzlich zur tabellarischen Darstellung der DEG-Ergebnisse kann man diese auch als sog. *"Volcano Plots"* darstellen. Dabei werden alle Gene als Punkte mit ihrem Signifikanzwert (y-Achse) und dem log2FoldChange (x-Achse) dargestellt. Die signifikanten Gene werden dabei farblich hervorgehoben. Mit dem R Paket [EnhancedVolcano](http://www.bioconductor.org/packages/release/bioc/vignettes/EnhancedVolcano/inst/doc/EnhancedVolcano.html) haben wir gute Erfahrungen gemacht.
+
+## Was zeigt ein Volcano Plot?
+
+Ein **Volcano Plot** ist im Prinzip ein **Streudiagramm**, in dem **jedes Punkt ein Gen** repräsentiert.
+
+### Achsen:
+
+- **x-Achse: log₂ Fold Change (log₂FC)**  
+  → Zeigt, **wie stark ein Gen hoch- oder herunterreguliert** ist
+
+- **y-Achse: −log₁₀(p-Wert oder adjustierter p-Wert)**  
+  → Zeigt, **wie statistisch signifikant** die Veränderung ist  
+  (je höher, desto signifikanter)
+
+---
+
+### Interpretation der Bereiche im Plot:
+
+- **Oben rechts:**  
+  🔺 **Stark hochregulierte und statistisch signifikante Gene**  
+  → hoher log₂FC & niedriger p-Wert
+
+- **Oben links:**  
+  🔻 **Stark herunterregulierte und statistisch signifikante Gene**  
+  → niedriger log₂FC & niedriger p-Wert
+
+- **Unten in der Mitte:**  
+  ⚪ **Keine signifikante Änderung**  
+  → geringer log₂FC & hoher p-Wert  
+  → Gene zeigen keinen starken Unterschied in der Expression
+
+---
+
+> Diese Darstellung hilft, Gene zu identifizieren, die sowohl **biologisch relevant (große Änderung)** als auch **statistisch signifikant** sind.
 
 **Erstellt jeweils einen Volcano Plot für die beiden Vergleiche.**
 
@@ -583,6 +749,13 @@ EnhancedVolcano(sora_annot,
     xlim = c(min(sora_annot$log2FoldChange, na.rm=TRUE), max(sora_annot$log2FoldChange, na.rm=TRUE))
 )
 ```
+## Volcano Plot Analyse: Sorafenib vs. DMSO
+
+Der Volcano Plot zeigt die differentiell exprimierten Gene unter Sorafenib-Behandlung im Vergleich zu DMSO. Es wurden insgesamt **15.805 Gene analysiert**. 
+
+- Zahlreiche Gene sind **signifikant herunterreguliert**, darunter wichtige Regulatoren wie **TNS4**, **MYC**, **FOSL1** und **SPRY4**.
+- Nur wenige Gene sind stark hochreguliert: **CDK1B**, **CDX2**, **BMF**, **SLC40A1**.
+- Den Rest sind moderat hoch- bzw. runterreguliert.
 
 #### Volcano Plot: Trametinib vs DMSO
 
@@ -601,6 +774,13 @@ EnhancedVolcano(tram_annot,
     xlim = c(min(tram_annot$log2FoldChange, na.rm=TRUE), max(tram_annot$log2FoldChange, na.rm=TRUE))
 )
 ```
+## Volcano Plot Analyse: Trametinib vs. DMSO
+
+Der Volcano Plot zeigt die differentiell exprimierten Gene unter **Trametinib**-Behandlung im Vergleich zu DMSO. Insgesamt wurden **15.805 Gene analysiert**.
+
+- signifikant herunterregulierte Gene:**TNS4**
+- Moderate herunterregulierte Gene:**IER3**, **FOSL1**, **EREG**, **PHC2**, **DDX21**, **TNS4**,
+- Nur wenige Gene zeigen eine moderate Hochregulation: **CDX2**, **BMF**, **ASCL2**
 
 ## Vergleich der beiden Medikamente
 
@@ -885,7 +1065,12 @@ gsea_sora_down$Term <- gsub("HALLMARK_", "", gsea_sora_down$Term)
 ```{r}
 gsea_up
 ```
+## Konklusion: Gemeinsamkeiten der hoch-regulierten Gensets
 
+- **Gemeinsame Aktivierung** zentraler Signalwege für Zelltod (Apoptose) und Stressreaktionen  
+- **Beeinflussung von Tumorsuppressorwegen** (z. B. *p53*) sowie **Hormonreaktionen** (z. B. Estrogen)  
+- **Beteiligung an metabolischen Prozessen**, insbesondere in Pankreas und Adipogenese  
+- → **Überlappende Wirkmechanismen** beider Medikamente zur Hemmung des Tumorwachstums
 ```{r gsea_up enrichment plot}
 gsea_up_plot <- gsea_up[order(gsea_up$adj.P.Val), ][1:10, ]
 gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels = rev(gsea_up_plot$Term))
@@ -921,11 +1106,39 @@ ggplot(gsea_up_plot, aes(x = Ratio, y = Term)) +
   theme_minimal()
 ```
 
-### Gemeinsamkeiten: Durch beide Medikamente runter-regulierte Hallmark Gensets
+### Gemeinsamkeiten: Durch beide Medikamente hochregulierte Hallmark Gensets
+
+- **Notch-Signalweg** zeigt die stärkste und signifikanteste Anreicherung → Hinweis auf zentrale Rolle bei der behandlungsinduzierten Zellantwort
+- **Apoptose**- und **Stressantwort-Gen-Sets (UV-Response)** sind ebenfalls stark beteiligt → Zelltodmechanismen werden wahrscheinlich aktiviert
+- **Hormonelle Signalwege (Estrogen)** sowie **PI3K/AKT/mTOR**- und **p53-Signalweg** sind moderat angereichert → Regulieren Zellzyklus, Wachstum und Überleben
+- **Metabolische Signalwege** (Pankreas, Adipogenese, Fettsäuremetabolismus) deuten auf zelluläre Umprogrammierung hin
+- **KRAS-Signalweg** ist kaum spezifisch angereichert → Keine zentrale Rolle in diesem experimentellen Kontext
+
+→ **Gemeinsame Aktivierung von Signalwegen für Differenzierung, Apoptose und hormonelle/metabolische Kontrolle legt überlappende, gezielte Wirkmechanismen der eingesetzten Medikamente nahe**
 
 ```{r}
 gsea_down
 ```
+## Schlussfolgerung: Wirkung auf herunterregulierte Signalwege
+
+- **Gemeinsame Hemmung von Entzündungs- und Immunantwortwegen**  
+  (z. B. *TNFα*, *IL2*, *IL6*, *JAK/STAT3*)  
+  → Deutet auf eine koordinierte Unterdrückung von entzündlichen und immunregulatorischen Prozessen hin
+
+- **Unterdrückung von KRAS-Signalwegen**  
+  → Da KRAS bei Aktivierung Zellwachstum und -teilung fördert, ist seine Hemmung besonders relevant bei Krebs, wo Mutationen zu permanenter Aktivierung führen können
+
+- **Downregulation von MYC-Zielgenen**  
+  → Hemmt zentrale zelluläre Prozesse wie Zellwachstum, Proliferation und Stoffwechsel
+
+- **Beeinflussung zellulärer Stressantworten**  
+  (z. B. *UV-Response*)  
+  → Regulierung der Reaktion auf DNA-Schäden und externe Stressoren
+
+- **Reduktion von Apoptose- und Hedgehog-Signalwegen**  
+  → Diese Prozesse sind zentral für Tumorprogression; ihre Hemmung kann das Überleben und die unkontrollierte Vermehrung von Tumorzellen begünstigen
+ 
+→ **Die Medikamente beeinflussen zahlreiche Signalwege, die das **Wachstum**, **Überleben** und **Verhalten von Tumorzellen sowie deren Mikroumgebung** steuern. Dies spricht für **komplexe und überlappende Wirkmechanismen** mit potenzieller therapeutischer Relevanz.**
 
 ```{r gsea_down enrichment plot}
 gsea_down_plot <- gsea_down[order(gsea_down$adj.P.Val), ][1:10, ]
@@ -961,6 +1174,19 @@ ggplot(gsea_down_plot, aes(x = Ratio, y = Term)) +
   ) +
   theme_minimal()
 ```
+## Gemeinsamkeiten: Durch beide Medikamente runterregulierte Hallmark Gensets
+- **TNFα-Signalweg über NF-κB** ist stark herunterreguliert und zeigt einen hohen Enrichment-Faktor  
+  → Deutet auf eine **gezielte Unterdrückung von Entzündungs- und Überlebenssignalen** hin  
+  → Dies könnte wesentlich zur **antitumoralen Wirkung** der Behandlung beitragen
+
+- **Inflammatorische Antwort**:  
+  Zahlreiche Gene, die an der Entzündungsreaktion beteiligt sind, sind betroffen  
+  → Hinweis auf eine **breit angelegte Immunsuppression bzw. -modulation**
+
+- Weitere herunterregulierte Signalwege umfassen:  
+  - **Notch-** und **p53-Signalweg**: Suppression wichtiger Steuermechanismen für Zellschicksal und DNA-Schadensantwort  
+  - **KRAS_SIGNALING_UP**, **Hedgehog**, **TGF-β** und **IL6/STAT3**: Dämpfung wachstums- und differenzierungsfördernder Prozesse  
+  - **Metabolische Pfade** wie **Cholesterin-Homöostase**
 
 ### Trametinib: Durch Trametinib hoch-regulierte Hallmark Gensets
 ```{r}
@@ -1006,6 +1232,28 @@ ggplot(gsea_tram_down_plot, aes(x = Ratio, y = Term)) +
   ) +
   theme_minimal()
 ```
+## Gesamtkonklusion: Wirkung von Trametinib auf zelluläre Signalwege
+
+Die Behandlung mit Trametinib beeinflusst eine Vielzahl zentraler Signalwege, die an Tumorwachstum, Zellüberleben, Differenzierung, Immunantwort und Stoffwechsel beteiligt sind:
+
+### 🔺 Hochregulierte Signalwege
+- **Aktivierung des Notch-Signalwegs** → Hinweis auf Beeinflussung von Differenzierung und Zellschicksal
+- **Starke Anreicherung von Apoptose- und UV-Stressantwort-Genen** → Induktion von Zelltod und zellulärem Stress
+- **Aktivierung des PI3K/AKT/mTOR-Signalwegs** → Regulation von Zellüberleben und Wachstum
+- **Estrogen Response (early & late)** → Potenzielle hormonelle Reaktionsmechanismen
+- **p53-Pathway** leicht aktiviert → Beteiligung tumorunterdrückender Mechanismen
+- **KRAS_Signaling_DN** hochreguliert → Indirekter Hinweis auf KRAS-Hemmung, konsistent mit MEK-Inhibition durch Trametinib
+
+### 🔻 Herunterregulierte Signalwege
+- **Starke Suppression des TNFα/NFκB-Signalwegs** → Hemmung von Entzündung und Überlebenssignalen – zentral für die antitumorale Wirkung
+- **Downregulation wachstumsfördernder Signalwege** wie *Hedgehog*, *MYC*, *Notch*  
+- **Unterdrückung von Immun- und Zytokin-Signalwegen** (*IL2/STAT5, IL6/STAT3*) → Mögliche Beeinflussung der Tumormikroumgebung
+- **Reduktion von Apoptose- und KRAS_Signal_UP-Genen** → Komplexe Effekte auf Zellschicksal und Proliferation
+- **Herunterregulierung metabolischer und stressbezogener Prozesse** (*Cholesterin-Homöostase, ROS, Hypoxie, Häm-Metabolismus*) → Hinweis auf umfassende metabolische Umstrukturierung
+
+---
+→ **Die Daten sprechen für **überlappende, breit wirkende Mechanismen**, die das Tumorwachstum auf mehreren Ebenen hemmen.**
+
 ```{r}
 gsea_sora_up
 ```
@@ -1050,6 +1298,100 @@ ggplot(gsea_sora_down_plot, aes(x = Ratio, y = Term)) +
   ) +
   theme_minimal()
 ```
+## Gesamtkonklusion: Wirkung von Sorafenib auf zelluläre Signalwege
+
+Sorafenib verändert gezielt zentrale Prozesse des Zellstoffwechsels, der Tumorregulation und Immunantwort:
+
+### 🔺 Hochregulierte Signalwege
+- **Starke Aktivierung metabolischer Prozesse**  
+  (*Adipogenese, Fettsäure-/Xenobiotika-Metabolismus, oxidative Phosphorylierung*)  
+  → Hinweis auf **zelluläre Reprogrammierung und Energieanpassung**
+
+- **Aktivierung von Apoptose- und p53-Signalwegen**  
+  → Förderung von **Tumorzelltod und Stressantworten**
+
+- **Induktion immunologischer Programme**  
+  (*Interferon-Alpha/Gamma Response*) → Mögliche **Stärkung antitumoraler Immunantwort**
+
+- **KRAS_Signaling_DN** hochreguliert → **Funktionelle KRAS-Hemmung**
+
+---
+
+### 🔻 Herunterregulierte Signalwege
+- **MYC-Targets stark unterdrückt**  
+  → Hemmung von Zellzyklus, Wachstum, Proliferation – **zentrale antitumorale Wirkung**
+
+- **Hemmung von TNFα/NFκB, IL2/STAT5, IL6/STAT3**  
+  → **Reduktion entzündlicher und zytokinvermittelter Signalwege**
+
+- **Suppression von KRAS_SIGNALING_UP und p53-Pathway**  
+  → Komplexe Effekte auf Zellüberleben und Tumorprogression
+
+- **Reduktion hormoneller & stressbezogener Antworten**  
+  (*Estrogen, Hedgehog, UPR*) → Eingriff in Differenzierungs- und Homöostaseprozesse
+
+---
+
+Sorafenib wirkt auf **multiple, sich überlappende Signalachsen**:
+- Es unterdrückt **zelluläres Wachstum und Proliferation** (MYC, KRAS)
+- Fördert **Apoptose und metabolische Reprogrammierung**
+- Beeinflusst **Immunantworten und Mikroumgebung**
+
+→ **Dies deutet auf eine **breit angelegte antitumorale Wirkung** hin, mit Einflüssen auf Tumorzellen **und deren funktionelles Umfeld**.**
+
+### Vergleichskonklusion: Sorafenib vs. Trametinib – Wirkung auf zelluläre Signalwege
+
+## Gemeinsamkeiten beider Medikamente
+
+- **Aktivierung von Apoptose- und p53-Signalwegen**  
+  → Beide fördern **Zelltod und tumorsuppressive Programme**
+
+- **Suppression inflammatorischer Signalwege**  
+  (*TNFα/NFκB, IL2/STAT5, IL6/JAK/STAT3*)  
+  → Hinweise auf **Modulation der Tumormikroumgebung** und entzündungshemmende Effekte
+
+- **Regulation hormoneller Signalwege**  
+  (*Estrogen, Androgen*) → Beide beeinflussen **hormonabhängige Zellprozesse**
+
+- **Beeinflussung metabolischer und stressbezogener Pfade**  
+  (z. B. *UV-Response, oxidative Phosphorylierung, ROS*)  
+  → **Umstrukturierung des zellulären Stoffwechsels**
+
+---
+
+## Sorafenib – spezifische Wirkprofile
+
+- **Starke Hochregulation metabolischer Signalwege**  
+  (*Adipogenese, Fett-/Häm-/Xenobiotika-Stoffwechsel*)  
+  → **Zelluläre Reprogrammierung als zentrales Merkmal**
+
+- **Massive Suppression von MYC-Zielgenen**  
+  → **Blockade von Proliferation und Tumorwachstum**
+
+- **Aktivierung von Interferon-Antworten**  
+  → **Stärkung immunologischer Effekte**
+
+---
+
+### Trametinib – spezifische Wirkprofile
+
+- **Aktivierung des Notch-Signalwegs**  
+  → Einfluss auf **Zelldifferenzierung und Zellschicksal**
+
+- **Downregulation klassischer Proliferationssignale**  
+  (*MYC, KRAS_UP, Hedgehog*)  
+  → **MEK-spezifischer Wachstumsstopp**
+
+- **Indirekte KRAS-Hemmung über Hochregulation von KRAS_Signaling_DN**  
+  → Mechanistisch konsistent mit der **MEK-Inhibition durch Trametinib**
+
+---
+
+### 🧩 Fazit
+
+**Sorafenib** wirkt **breiter auf metabolische Netzwerke und Immunantworten**, während **Trametinib gezielt wachstums- und differenzierungsrelevante MAPK-Signalachsen** angreift.
+
+**Beide Substanzen greifen an mehreren Ebenen des Tumorverhaltens an**, unterscheiden sich jedoch in **Tiefe und Schwerpunkt der molekularen Regulation** – was für **komplementäre therapeutische Ansätze** sprechen könnte.
 
 # Anhang
 
