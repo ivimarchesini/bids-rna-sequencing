@@ -510,7 +510,6 @@ kable(sora_down[, c("Symbol", "log2FoldChange", "padj")],
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
 ```
-
 #### Trametinib vs. DMSO
 
 ```{r Trametinib vs DMSO up-regulated}
@@ -530,7 +529,6 @@ kable(tram_down[, c("Symbol", "log2FoldChange", "padj")],
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
 ```
-
 #### Gene Ontology Analysis
 Die **Gene Ontology (GO)-Analyse** ist ein bioinformatisches Verfahren, das verwendet wird, um die **biologischen Funktionen**, an denen eine Liste von Genen beteiligt ist, systematisch zu beschreiben und zu interpretieren.
 
@@ -615,8 +613,6 @@ Weitere betroffene Prozesse:
 - **Insulinantwort**
 - **Proteinabbau**
 
----
-
 **Fazit**:  
 **Sorafenib** führt zu einer **umfassenden metabolischen Reprogrammierung** und aktiviert **zelluläre Schutzmechanismen**, um mit dem durch den Wirkstoff ausgelösten Stress umzugehen.
 
@@ -641,8 +637,6 @@ Zusätzlich werden folgende Prozesse signifikant **herunterreguliert**:
 - **Kinaseaktivität**
 - **Apoptose-regulierende Signalwege**
 
----
-
 **Fazit**:  
 **Sorafenib hemmt zentrale zelluläre Funktionen** wie **Translation**, **Signalweiterleitung** und **Zellwachstum** – dies unterstützt seine **wirkung als wachstumshemmendes Krebsmedikament**.
 
@@ -662,8 +656,6 @@ Besonders hervorzuheben sind:
 - **Intrazelluläre Rezeptorsignalwege**
 - **Reaktionen auf Vitamine**
 - **Differenzierung kardialer vaskulärer glatter Muskelzellen**
-
----
 
 **Fazit**:  
 **Trametinib** wirkt nicht nur auf Tumorzellen, sondern beeinflusst auch **wichtige Entwicklungs- und Regulationswege** in verschiedenen Geweben.
@@ -690,8 +682,6 @@ Auch Entwicklungsprozesse sind betroffen, insbesondere:
 - **Haut- und Mesenchymentwicklung**
 - **Reaktion auf oxidativen Stress** und **Xenobiotika**
 
----
-
 **Fazit**:  
 **Trametinib hemmt die Regulation vielfältiger zellulärer und entwicklungsbezogener Signalwege**, was möglicherweise zur **Hemmung von Tumorwachstum und -Progression** beiträgt.
 
@@ -712,8 +702,6 @@ Ein **Volcano Plot** ist im Prinzip ein **Streudiagramm**, in dem **jedes Punkt 
   → Zeigt, **wie statistisch signifikant** die Veränderung ist  
   (je höher, desto signifikanter)
 
----
-
 ### Interpretation der Bereiche im Plot:
 
 - **Oben rechts:**  
@@ -729,11 +717,10 @@ Ein **Volcano Plot** ist im Prinzip ein **Streudiagramm**, in dem **jedes Punkt 
   → geringer log₂FC & hoher p-Wert  
   → Gene zeigen keinen starken Unterschied in der Expression
 
----
-
 > Diese Darstellung hilft, Gene zu identifizieren, die sowohl **biologisch relevant (große Änderung)** als auch **statistisch signifikant** sind.
 
 **Erstellt jeweils einen Volcano Plot für die beiden Vergleiche.**
+
 
 ```{r Volcano Plot Sorafenib vs DMSO}
 EnhancedVolcano(sora_annot,
@@ -775,6 +762,13 @@ EnhancedVolcano(tram_annot,
     xlim = c(min(tram_annot$log2FoldChange, na.rm=TRUE), max(tram_annot$log2FoldChange, na.rm=TRUE))
 )
 ```
+## Volcano Plot Analyse: Trametinib vs. DMSO
+
+Der Volcano Plot zeigt die differentiell exprimierten Gene unter **Trametinib**-Behandlung im Vergleich zu DMSO. Insgesamt wurden **15.805 Gene analysiert**.
+
+- signifikant herunterregulierte Gene:**TNS4**
+- Moderate herunterregulierte Gene:**IER3**, **FOSL1**, **EREG**, **PHC2**, **DDX21**, **TNS4**,
+- Nur wenige Gene zeigen eine moderate Hochregulation: **CDX2**, **BMF**, **ASCL2**
 
 ## Vergleich der beiden Medikamente
 
@@ -1059,14 +1053,12 @@ gsea_sora_down$Term <- gsub("HALLMARK_", "", gsea_sora_down$Term)
 ```{r}
 gsea_up
 ```
-
 ## Konklusion: Gemeinsamkeiten der hoch-regulierten Gensets
 
 - **Gemeinsame Aktivierung** zentraler Signalwege für Zelltod (Apoptose) und Stressreaktionen  
 - **Beeinflussung von Tumorsuppressorwegen** (z. B. *p53*) sowie **Hormonreaktionen** (z. B. Estrogen)  
 - **Beteiligung an metabolischen Prozessen**, insbesondere in Pankreas und Adipogenese  
 - → **Überlappende Wirkmechanismen** beider Medikamente zur Hemmung des Tumorwachstums
-
 ```{r gsea_up enrichment plot}
 gsea_up_plot <- gsea_up[order(gsea_up$adj.P.Val), ][1:10, ]
 gsea_up_plot$Term <- factor(gsea_up_plot$Term, levels = rev(gsea_up_plot$Term))
@@ -1185,11 +1177,9 @@ ggplot(gsea_down_plot, aes(x = Ratio, y = Term)) +
   - **Metabolische Pfade** wie **Cholesterin-Homöostase**
 
 ### Trametinib: Durch Trametinib hoch-regulierte Hallmark Gensets
-
 ```{r}
 gsea_tram_up
 ```
-
 ```{r Dotplot gsea_tram_up, fig.width=8, fig.height=5}
 # Calculate ratio and order by ratio descending, select top 25
 gsea_tram_up_plot <- gsea_tram_up
@@ -1210,11 +1200,9 @@ ggplot(gsea_tram_up_plot, aes(x = Ratio, y = Term)) +
 ```
 
 ### Trametinib: Durch Trametinib runter-regulierte Hallmark Gensets
-
 ```{r}
 gsea_tram_down
 ```
-
 ```{r Dotplot gsea_tram_down, fig.width=8, fig.height=5}
 # Calculate ratio and order by ratio descending, select top 25
 gsea_tram_down_plot <- gsea_tram_down
@@ -1251,13 +1239,11 @@ Die Behandlung mit Trametinib beeinflusst eine Vielzahl zentraler Signalwege, di
 - **Reduktion von Apoptose- und KRAS_Signal_UP-Genen** → Komplexe Effekte auf Zellschicksal und Proliferation
 - **Herunterregulierung metabolischer und stressbezogener Prozesse** (*Cholesterin-Homöostase, ROS, Hypoxie, Häm-Metabolismus*) → Hinweis auf umfassende metabolische Umstrukturierung
 
----
 → **Die Daten sprechen für **überlappende, breit wirkende Mechanismen**, die das Tumorwachstum auf mehreren Ebenen hemmen.**
 
 ```{r}
 gsea_sora_up
 ```
-
 ```{r Dotplot gsea_sora_up, fig.width=8, fig.height=5}
 # Calculate ratio and order by ratio descending, select top 25
 gsea_sora_up_plot <- gsea_sora_up
@@ -1278,11 +1264,9 @@ ggplot(gsea_sora_up_plot, aes(x = Ratio, y = Term)) +
 ```
 
 ### Sorafenib: Durch Sorafenib runter-regulierte Hallmark Gensets
-
 ```{r}
 gsea_sora_down
 ```
-
 ```{r Dotplot gsea_sora_down, fig.width=8, fig.height=5}
 # Calculate ratio and order by ratio descending, select top 25
 gsea_sora_down_plot <- gsea_sora_down
@@ -1301,6 +1285,7 @@ ggplot(gsea_sora_down_plot, aes(x = Ratio, y = Term)) +
   ) +
   theme_minimal()
 ```
+
 ## Gesamtkonklusion: Wirkung von Sorafenib auf zelluläre Signalwege
 
 Sorafenib verändert gezielt zentrale Prozesse des Zellstoffwechsels, der Tumorregulation und Immunantwort:
@@ -1318,8 +1303,6 @@ Sorafenib verändert gezielt zentrale Prozesse des Zellstoffwechsels, der Tumorr
 
 - **KRAS_Signaling_DN** hochreguliert → **Funktionelle KRAS-Hemmung**
 
----
-
 ### 🔻 Herunterregulierte Signalwege
 - **MYC-Targets stark unterdrückt**  
   → Hemmung von Zellzyklus, Wachstum, Proliferation – **zentrale antitumorale Wirkung**
@@ -1332,8 +1315,6 @@ Sorafenib verändert gezielt zentrale Prozesse des Zellstoffwechsels, der Tumorr
 
 - **Reduktion hormoneller & stressbezogener Antworten**  
   (*Estrogen, Hedgehog, UPR*) → Eingriff in Differenzierungs- und Homöostaseprozesse
-
----
 
 Sorafenib wirkt auf **multiple, sich überlappende Signalachsen**:
 - Es unterdrückt **zelluläres Wachstum und Proliferation** (MYC, KRAS)
@@ -1360,8 +1341,6 @@ Sorafenib wirkt auf **multiple, sich überlappende Signalachsen**:
   (z. B. *UV-Response, oxidative Phosphorylierung, ROS*)  
   → **Umstrukturierung des zellulären Stoffwechsels**
 
----
-
 ## Sorafenib – spezifische Wirkprofile
 
 - **Starke Hochregulation metabolischer Signalwege**  
@@ -1374,8 +1353,6 @@ Sorafenib wirkt auf **multiple, sich überlappende Signalachsen**:
 - **Aktivierung von Interferon-Antworten**  
   → **Stärkung immunologischer Effekte**
 
----
-
 ### Trametinib – spezifische Wirkprofile
 
 - **Aktivierung des Notch-Signalwegs**  
@@ -1387,8 +1364,6 @@ Sorafenib wirkt auf **multiple, sich überlappende Signalachsen**:
 
 - **Indirekte KRAS-Hemmung über Hochregulation von KRAS_Signaling_DN**  
   → Mechanistisch konsistent mit der **MEK-Inhibition durch Trametinib**
-
----
 
 ### 🧩 Fazit
 
