@@ -275,10 +275,10 @@ Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normali
 ```{r Normalisierung und Differentielle Expression}
 # Run the standard DESeq2 workflow
 dds <- DESeq(
-	object = dds,
-	test = "Wald",
-	fitType = "parametric",
-	parallel = TRUE
+  object = dds,
+  test = "Wald",
+  fitType = "parametric",
+  parallel = TRUE
 )
 
 # Variance stabilizing transformation
@@ -304,7 +304,6 @@ Hinweis: Normalisierte Counts erhaltet ihr nach anwenden der `DESeq()` Funktion 
 library(DESeq2)
 library(tidyr)
 library(dplyr)
-library(ggplot2)
 
 # Rohcounts
 raw_cts <- counts(dds, normalized = FALSE)
@@ -345,7 +344,6 @@ Bevor wir mit der tatsächlichen DEG-Analyse fortfahren berechnen wir eine PCA u
 ```{r PCA}
 # Lade benötigte Pakete
 library(FactoMineR)
-library(ggplot2)
 
 # Angenommen, rld ist ein DESeq2::rlog Objekt
 # Extrahiere die rlog-Werte als Matrix
@@ -452,7 +450,6 @@ deg_counts <- data.frame(
   Anzahl = c(nrow(sora_up), nrow(sora_down), nrow(tram_up), nrow(tram_down))
 )
 
-library(ggplot2)
 ggplot(deg_counts, aes(x = Vergleich, y = Anzahl, fill = Regulation)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(title = "Anzahl signifikanter DEGs (FDR < 0.05)", y = "Gene", x = "") +
@@ -475,10 +472,10 @@ kable(sora_up[, c("Symbol", "log2FoldChange", "padj")],
 ```{r Sorafenib vs DMSO down-regulated}
 # Tabellarische Darstellung der signifikanten DEGs für Sorafenib vs DMSO
 kable(sora_down[, c("Symbol", "log2FoldChange", "padj")], 
-			col.names = c("Symbol", "log2FC", "adj. p-value"), 
-			caption = "Signifikante DEGs Sorafenib vs DMSO (down-reguliert)") %>%
-	kable_styling() %>%
-	scroll_box(width = "100%", height = "400px")
+      col.names = c("Symbol", "log2FC", "adj. p-value"), 
+      caption = "Signifikante DEGs Sorafenib vs DMSO (down-reguliert)") %>%
+  kable_styling() %>%
+  scroll_box(width = "100%", height = "400px")
 ```
 #### Trametinib vs. DMSO
 
@@ -824,6 +821,7 @@ gsea_up <- hyperG(
   parallel = TRUE,
   set.size = c(10,500)
 )
+gsea_up$Term <- gsub("HALLMARK_", "", gsea_up$Term)
 
 # GSEA für durch beide Medikamente runter-regulierte Gene
 gsea_down <- hyperG(
@@ -835,13 +833,57 @@ gsea_down <- hyperG(
   parallel = TRUE,
   set.size = c(10,500)
 )
+gsea_down$Term <- gsub("HALLMARK_", "", gsea_down$Term)
+
+gsea_tram_up <- hyperG(
+  geneSets = hallmark,
+  DEgenes = tram_up$Symbol,
+  universe = universe,
+  cutoff = 0.1,
+  mincount = 2,
+  parallel = TRUE,
+  set.size = c(10,500)
+)
+gsea_tram_up$Term <- gsub("HALLMARK_", "", gsea_tram_up$Term)
+
+gsea_tram_down <- hyperG(
+  geneSets = hallmark,
+  DEgenes = tram_down$Symbol,
+  universe = universe,
+  cutoff = 0.1,
+  mincount = 2,
+  parallel = TRUE,
+  set.size = c(10,500)
+)
+gsea_tram_down$Term <- gsub("HALLMARK_", "", gsea_tram_down$Term)
+
+gsea_sora_up <- hyperG(
+  geneSets = hallmark,
+  DEgenes = sora_up$Symbol,
+  universe = universe,
+  cutoff = 0.1,
+  mincount = 2,
+  parallel = TRUE,
+  set.size = c(10,500)
+)
+gsea_sora_up$Term <- gsub("HALLMARK_", "", gsea_sora_up$Term)
+
+gsea_sora_down <- hyperG(
+  geneSets = hallmark,
+  DEgenes = sora_down$Symbol,
+  universe = universe,
+  cutoff = 0.1,
+  mincount = 2,
+  parallel = TRUE,
+  set.size = c(10,500)
+)
+gsea_sora_down$Term <- gsub("HALLMARK_", "", gsea_sora_down$Term)
 ```
 
 ### Gemeinsamkeiten: Durch beide Medikamente hoch-regulierte Hallmark Gensets
 
 ```{r}
 gsea_up
-gsea_up$Term <- gsub("HALLMARK_", "", gsea_up$Term)
 ```
 
 ```{r gsea_up enrichment plot}
@@ -861,7 +903,6 @@ ggplot(gsea_up_plot, aes(x = Term, y = -log10(adj.P.Val), fill = Count)) +
 ```
 
 ```{r Dotplot gsea_up, fig.width=8, fig.height=5}
-library(ggplot2)
 # Calculate ratio and order by ratio descending, select top 25
 gsea_up_plot <- gsea_up
 gsea_up_plot$Ratio <- gsea_up_plot$Count / gsea_up_plot$Size
@@ -872,7 +913,7 @@ ggplot(gsea_up_plot, aes(x = Ratio, y = Term)) +
   geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
   scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
   labs(
-    title = "Dotplot: Top Enriched Hallmark Gene Sets (Up-regulated, Ordered by Ratio)",
+    title = "Both Up: Top Enriched Hallmark Gene Sets (Up-regulated, Ordered by Ratio)",
     x = "Gene Ratio (Count / Size)",
     y = "Gene Set",
     size = "Gene Count"
@@ -884,7 +925,6 @@ ggplot(gsea_up_plot, aes(x = Ratio, y = Term)) +
 
 ```{r}
 gsea_down
-gsea_down$Term <- gsub("HALLMARK_", "", gsea_down$Term)
 ```
 
 ```{r gsea_down enrichment plot}
@@ -904,7 +944,6 @@ ggplot(gsea_down_plot, aes(x = Term, y = -log10(adj.P.Val), fill = Count)) +
 ```
 
 ```{r Dotplot gsea_down, fig.width=8, fig.height=5}
-library(ggplot2)
 # Calculate ratio and order by ratio descending, select top 25
 gsea_down_plot <- gsea_down
 gsea_down_plot$Ratio <- gsea_down_plot$Count / gsea_down_plot$Size
@@ -915,9 +954,98 @@ ggplot(gsea_down_plot, aes(x = Ratio, y = Term)) +
   geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
   scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
   labs(
-    title = "Dotplot: Top Enriched KEGG Pathways (Ordered by Ratio)",
+    title = "Both Down: Top Enriched KEGG Pathways (Ordered by Ratio)",
     x = "Gene Ratio (Count / Size)",
     y = "KEGG Pathway",
+    size = "Gene Count"
+  ) +
+  theme_minimal()
+```
+
+### Trametinib: Durch Trametinib hoch-regulierte Hallmark Gensets
+```{r}
+gsea_tram_up
+```
+```{r Dotplot gsea_tram_up, fig.width=8, fig.height=5}
+# Calculate ratio and order by ratio descending, select top 25
+gsea_tram_up_plot <- gsea_tram_up
+gsea_tram_up_plot$Ratio <- gsea_tram_up_plot$Count / gsea_tram_up_plot$Size
+gsea_tram_up_plot <- gsea_tram_up_plot[order(gsea_tram_up_plot$Ratio, decreasing = TRUE), ][1:min(25, nrow(gsea_tram_up_plot)), ]
+gsea_tram_up_plot$Term <- factor(gsea_tram_up_plot$Term, levels = rev(gsea_tram_up_plot$Term))
+
+ggplot(gsea_tram_up_plot, aes(x = Ratio, y = Term)) +
+  geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
+  labs(
+    title = "Trametinib Up: Top Enriched Hallmark Gene Sets (Up-regulated, Ordered by Ratio)",
+    x = "Gene Ratio (Count / Size)",
+    y = "Gene Set",
+    size = "Gene Count"
+  ) +
+  theme_minimal()
+```
+
+### Trametinib: Durch Trametinib runter-regulierte Hallmark Gensets
+```{r}
+gsea_tram_down
+```
+```{r Dotplot gsea_tram_down, fig.width=8, fig.height=5}
+# Calculate ratio and order by ratio descending, select top 25
+gsea_tram_down_plot <- gsea_tram_down
+gsea_tram_down_plot$Ratio <- gsea_tram_down_plot$Count / gsea_tram_down_plot$Size
+gsea_tram_down_plot <- gsea_tram_down_plot[order(gsea_tram_down_plot$Ratio, decreasing = TRUE), ][1:min(25, nrow(gsea_tram_down_plot)), ]
+gsea_tram_down_plot$Term <- factor(gsea_tram_down_plot$Term, levels = rev(gsea_tram_down_plot$Term))
+ggplot(gsea_tram_down_plot, aes(x = Ratio, y = Term)) +
+  geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
+  labs(
+    title = "Trametinib Down: Top Enriched Hallmark Gene Sets (Down-regulated, Ordered by Ratio)",
+    x = "Gene Ratio (Count / Size)",
+    y = "Gene Set",
+    size = "Gene Count"
+  ) +
+  theme_minimal()
+```
+```{r}
+gsea_sora_up
+```
+```{r Dotplot gsea_sora_up, fig.width=8, fig.height=5}
+# Calculate ratio and order by ratio descending, select top 25
+gsea_sora_up_plot <- gsea_sora_up
+gsea_sora_up_plot$Ratio <- gsea_sora_up_plot$Count / gsea_sora_up_plot$Size
+gsea_sora_up_plot <- gsea_sora_up_plot[order(gsea_sora_up_plot$Ratio, decreasing = TRUE), ][1:min(25, nrow(gsea_sora_up_plot)), ]
+gsea_sora_up_plot$Term <- factor(gsea_sora_up_plot$Term, levels = rev(gsea_sora_up_plot$Term))
+
+ggplot(gsea_sora_up_plot, aes(x = Ratio, y = Term)) +
+  geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
+  labs(
+    title = "Sorafenib Up: Top Enriched Hallmark Gene Sets (Up-regulated, Ordered by Ratio)",
+    x = "Gene Ratio (Count / Size)",
+    y = "Gene Set",
+    size = "Gene Count"
+  ) +
+  theme_minimal()
+```
+
+### Sorafenib: Durch Sorafenib runter-regulierte Hallmark Gensets
+```{r}
+gsea_sora_down
+```
+```{r Dotplot gsea_sora_down, fig.width=8, fig.height=5}
+# Calculate ratio and order by ratio descending, select top 25
+gsea_sora_down_plot <- gsea_sora_down
+gsea_sora_down_plot$Ratio <- gsea_sora_down_plot$Count / gsea_sora_down_plot$Size
+gsea_sora_down_plot <- gsea_sora_down_plot[order(gsea_sora_down_plot$Ratio, decreasing = TRUE), ][1:min(25, nrow(gsea_sora_down_plot)), ]
+gsea_sora_down_plot$Term <- factor(gsea_sora_down_plot$Term, levels = rev(gsea_sora_down_plot$Term))
+
+ggplot(gsea_sora_down_plot, aes(x = Ratio, y = Term)) +
+  geom_point(aes(size = Count, color = -log10(adj.P.Val))) +
+  scale_color_viridis_c(option = "plasma", direction = -1, name = "-log10(adj. p-value)") +
+  labs(
+    title = "Sorafenib Down: Top Enriched Hallmark Gene Sets (Down-regulated, Ordered by Ratio)",
+    x = "Gene Ratio (Count / Size)",
+    y = "Gene Set",
     size = "Gene Count"
   ) +
   theme_minimal()
