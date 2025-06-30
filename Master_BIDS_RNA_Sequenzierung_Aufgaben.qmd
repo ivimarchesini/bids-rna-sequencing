@@ -268,11 +268,11 @@ print(countRowsBefore - countRowsAfter)
 
 ```
 
-### Normalisierung und Differentielle Expression
+## Normalisierung und Differentielle Expression
 
 Nachdem wir die schwach exprimierten Gene entfernt haben können wir die Normalisierung der Daten vornehmen. Dazu müssen wir die *"size factors"* und die *"Dispersion"* bestimmen, damit wir den tatsächlichen Signifikanztest (wir wollen den Wald- Test verwenden) anwenden können. Außerdem müssen wir die normalisierten Expressionswerte extrahieren, damit wir damit z.B. eine PCA erstellen können. Dazu verwenden wir die [*regularized logarithm* (rlog) Transformation](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#regularized-log-transformation). Die Werte können dann mit der Funktion `assay()` extrahiert werden.
 
-## Warum ist die Normalisierung von Counts wichtig?
+### Warum ist die Normalisierung von Counts wichtig?
 
 Die **Normalisierung von RNA-Seq-Daten** ist ein entscheidender Schritt im Analyseprozess. Sie ist notwendig, um technische Variabilität zu beseitigen und sinnvolle Vergleiche der Genexpressionsniveaus zwischen Proben zu ermöglichen.
 
@@ -529,7 +529,7 @@ kable(tram_down[, c("Symbol", "log2FoldChange", "padj")],
   kable_styling() %>%
   scroll_box(width = "100%", height = "400px")
 ```
-#### Gene Ontology Analysis
+### Gene Ontology Analysis
 Die **Gene Ontology (GO)-Analyse** ist ein bioinformatisches Verfahren, das verwendet wird, um die **biologischen Funktionen**, an denen eine Liste von Genen beteiligt ist, systematisch zu beschreiben und zu interpretieren.
 
 Die **Gene Ontology** unterteilt die Genfunktionen in drei Hauptkategorien:
@@ -685,11 +685,11 @@ Auch Entwicklungsprozesse sind betroffen, insbesondere:
 **Fazit**:  
 **Trametinib hemmt die Regulation vielfältiger zellulärer und entwicklungsbezogener Signalwege**, was möglicherweise zur **Hemmung von Tumorwachstum und -Progression** beiträgt.
 
-### Visuelle Darstellung: Volcano Plot
+## Visuelle Darstellung: Volcano Plot
 
 Zusätzlich zur tabellarischen Darstellung der DEG-Ergebnisse kann man diese auch als sog. *"Volcano Plots"* darstellen. Dabei werden alle Gene als Punkte mit ihrem Signifikanzwert (y-Achse) und dem log2FoldChange (x-Achse) dargestellt. Die signifikanten Gene werden dabei farblich hervorgehoben. Mit dem R Paket [EnhancedVolcano](http://www.bioconductor.org/packages/release/bioc/vignettes/EnhancedVolcano/inst/doc/EnhancedVolcano.html) haben wir gute Erfahrungen gemacht.
 
-## Was zeigt ein Volcano Plot?
+### Was zeigt ein Volcano Plot?
 
 Ein **Volcano Plot** ist im Prinzip ein **Streudiagramm**, in dem **jedes Punkt ein Gen** repräsentiert.
 
@@ -842,7 +842,7 @@ up_sets[["Sorafenib-Trametinib"]]
 down_sets[["Sorafenib-Trametinib"]]
 ```
 
-### Gemeinsamkeiten
+## Gemeinsamkeiten
 
 Nachdem wir die DEGs für beide Medikamente identifiziert haben, können wir nun die Gemeinsamkeiten und Unterschiede zwischen den beiden Medikamenten analysieren. Wir haben bereits die hoch- und runter-regulierten Gene in Listen organisiert und können diese nun vergleichen.
 
@@ -1365,7 +1365,7 @@ Dies deutet auf eine **breit angelegte antitumorale Wirkung** hin, mit Einflüss
 - **Indirekte KRAS-Hemmung über Hochregulation von KRAS_Signaling_DN**  
   Mechanistisch konsistent mit der **MEK-Inhibition durch Trametinib**
 
-### Fazit
+## Fazit
 
 **Sorafenib** wirkt **breiter auf metabolische Netzwerke und Immunantworten**, während **Trametinib gezielt wachstums- und differenzierungsrelevante MAPK-Signalachsen** angreift.
 
